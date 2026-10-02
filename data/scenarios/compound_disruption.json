@@ -1,0 +1,47 @@
+{
+  "name": "COMPOUND_DISRUPTION",
+  "description": "Multi-vector synchronized stress: +30% demand surge across forward posts, primary supply line R-01 blocked, blizzard weather degradation, and 20% vehicle availability loss.",
+  "horizon_hours": 336,
+  "disruptions": [
+    {
+      "id": "DISR_CD_DEMAND",
+      "type": "DEMAND_SURGE",
+      "target": "ALL_FORWARD_POSTS",
+      "severity": 0.5,
+      "start_time": 24,
+      "duration": 168,
+      "impact_factor": 0.30,
+      "description": "Forward post demand surge (+30%) due to operational deployment."
+    },
+    {
+      "id": "DISR_CD_ROUTE",
+      "type": "ROUTE_BLOCKED",
+      "target": "ROUTE_R_01",
+      "severity": 1.0,
+      "start_time": 24,
+      "duration": 120,
+      "impact_factor": 1.0,
+      "description": "Primary valley corridor ROUTE_R_01 severed by major rockfall."
+    },
+    {
+      "id": "DISR_CD_WEATHER",
+      "type": "WEATHER_DEGRADATION",
+      "target": "NORTHERN_SECTOR",
+      "severity": 0.9,
+      "start_time": 36,
+      "duration": 96,
+      "impact_factor": 1.5,
+      "description": "Severe blizzard conditions across northern mountain passes slowing convoys."
+    },
+    {
+      "id": "DISR_CD_FLEET",
+      "type": "VEHICLE_UNAVAILABLE",
+      "target": "FLEET_PERCENTAGE",
+      "severity": 0.7,
+      "start_time": 24,
+      "duration": 144,
+      "impact_factor": 0.20,
+      "description": "20% reduction in vehicle fleet availability due to sub-zero maintenance holds."
+    }
+  ]
+}

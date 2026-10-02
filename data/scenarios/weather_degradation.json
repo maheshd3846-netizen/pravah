@@ -1,0 +1,17 @@
+{
+  "name": "WEATHER_DEGRADATION",
+  "description": "Intense Himalayan blizzard blankets Northern & Eastern sectors, cutting visibility below 1km and doubling transit times.",
+  "horizon_hours": 336,
+  "disruptions": [
+    {
+      "id": "DISR_WD_01",
+      "type": "WEATHER_DEGRADATION",
+      "target": "NORTHERN_SECTOR",
+      "severity": 0.9,
+      "start_time": 36,
+      "duration": 72,
+      "impact_factor": 1.5,
+      "description": "Blizzard condition across high altitude passes causing severe delays and ice accumulation."
+    }
+  ]
+}

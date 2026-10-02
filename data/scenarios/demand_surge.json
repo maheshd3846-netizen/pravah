@@ -1,0 +1,17 @@
+{
+  "name": "DEMAND_SURGE",
+  "description": "Forward defense posts encounter intense operational mobilization, creating a +60% sustained surge in critical supplies.",
+  "horizon_hours": 336,
+  "disruptions": [
+    {
+      "id": "DISR_DS_01",
+      "type": "DEMAND_SURGE",
+      "target": "ALL_FORWARD_POSTS",
+      "severity": 0.6,
+      "start_time": 48,
+      "duration": 120,
+      "impact_factor": 0.60,
+      "description": "Forward sector alert causing +60% demand for fuel, rations, and critical spares."
+    }
+  ]
+}

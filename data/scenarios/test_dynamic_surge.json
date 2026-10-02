@@ -1,0 +1,17 @@
+{
+  "name": "TEST_DYNAMIC_SURGE",
+  "description": "API test scenario",
+  "horizon_hours": 48,
+  "disruptions": [
+    {
+      "id": "DISR_TEST_01",
+      "type": "DEMAND_SURGE",
+      "target": "ALL_FORWARD_POSTS",
+      "severity": 0.5,
+      "start_time": 10,
+      "duration": 20,
+      "impact_factor": 0.4,
+      "description": "Test surge"
+    }
+  ]
+}

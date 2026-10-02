@@ -1,0 +1,17 @@
+{
+  "name": "VEHICLE_SHOCK",
+  "description": "Critical spare parts shortage and extreme cold causes unpredicted mechanical breakdown across 35% of the transport fleet.",
+  "horizon_hours": 336,
+  "disruptions": [
+    {
+      "id": "DISR_VS_01",
+      "type": "VEHICLE_UNAVAILABLE",
+      "target": "FLEET_PERCENTAGE",
+      "severity": 0.8,
+      "start_time": 12,
+      "duration": 144,
+      "impact_factor": 0.35,
+      "description": "35% of operational tactical vehicle fleet grounded due to severe cold-start engine failures."
+    }
+  ]
+}

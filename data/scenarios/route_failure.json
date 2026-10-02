@@ -1,0 +1,17 @@
+{
+  "name": "ROUTE_FAILURE",
+  "description": "Massive landslide blocks primary valley corridor R-01 linking Central Base Depot Alpha to Northern Sector Hub Trishul.",
+  "horizon_hours": 336,
+  "disruptions": [
+    {
+      "id": "DISR_RF_01",
+      "type": "ROUTE_BLOCKED",
+      "target": "ROUTE_R_01",
+      "severity": 1.0,
+      "start_time": 24,
+      "duration": 96,
+      "impact_factor": 1.0,
+      "description": "Rockfall blocks primary corridor ROUTE_R_01 for 96 hours, forcing traffic onto slower alternate mountain passes."
+    }
+  ]
+}

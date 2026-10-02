@@ -1,0 +1,6 @@
+{
+  "name": "NORMAL",
+  "description": "Baseline operational conditions under regular seasonal variations without unexpected supply shocks or severe route disruptions.",
+  "horizon_hours": 336,
+  "disruptions": []
+}

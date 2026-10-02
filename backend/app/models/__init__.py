@@ -1,0 +1,47 @@
+"""Database models and entities export for PRAVAH backend."""
+
+from backend.app.models.database import Base, engine, SessionLocal, get_db, init_db
+from backend.app.models.entities import (
+    NodeModel,
+    RouteModel,
+    SupplyItemModel,
+    VehicleModel,
+    VehicleEventModel,
+    WeatherStateModel,
+    DemandHistoryModel,
+    InventorySnapshotModel,
+    InventoryTransactionModel,
+    ForecastModel,
+    RiskScoreModel,
+    ScenarioModel,
+    DisruptionModel,
+    ScenarioResultModel,
+    OptimizationRunModel,
+    OptimizationDecisionModel,
+    RecommendationModel,
+)
+
+__all__ = [
+    "Base",
+    "engine",
+    "SessionLocal",
+    "get_db",
+    "init_db",
+    "NodeModel",
+    "RouteModel",
+    "SupplyItemModel",
+    "VehicleModel",
+    "VehicleEventModel",
+    "WeatherStateModel",
+    "DemandHistoryModel",
+    "InventorySnapshotModel",
+    "InventoryTransactionModel",
+    "ForecastModel",
+    "RiskScoreModel",
+    "ScenarioModel",
+    "DisruptionModel",
+    "ScenarioResultModel",
+    "OptimizationRunModel",
+    "OptimizationDecisionModel",
+    "RecommendationModel",
+]
