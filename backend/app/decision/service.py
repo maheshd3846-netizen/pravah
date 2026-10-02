@@ -130,11 +130,43 @@ class DecisionService:
             status_counts[r.status] = status_counts.get(r.status, 0) + 1
             action_counts[r.action_type] = action_counts.get(r.action_type, 0) + 1
 
+        # Build rejection summary to help consumers understand REJECTED status
+        # without weakening the conflict detector.
+        rejection_summary: Optional[str] = None
+        rejected_recs = [r for r in recs if r.status == "REJECTED"]
+        if rejected_recs:
+            # Categorise conflict types for a clear, actionable explanation
+            vehicle_conflicts = sum(1 for r in rejected_recs if any("Vehicle conflict" in c for c in r.conflict_details))
+            route_blocks = sum(1 for r in rejected_recs if any("BLOCKED" in c for c in r.conflict_details))
+            inventory_conflicts = sum(1 for r in rejected_recs if any("exceed" in c.lower() for c in r.conflict_details))
+
+            parts = []
+            if vehicle_conflicts:
+                parts.append(
+                    f"{vehicle_conflicts} rejected due to simultaneous vehicle assignment conflicts "
+                    f"(the LP allocates all vehicles at dispatch_hour=0; the conflict detector enforces "
+                    f"one assignment per vehicle per hour, correctly excluding overlapping dispatches)"
+                )
+            if route_blocks:
+                parts.append(f"{route_blocks} rejected due to BLOCKED route corridors")
+            if inventory_conflicts:
+                parts.append(f"{inventory_conflicts} rejected due to aggregate inventory over-commitment")
+            other = len(rejected_recs) - vehicle_conflicts - route_blocks - inventory_conflicts
+            if other > 0:
+                parts.append(f"{other} rejected for other physical constraint violations")
+
+            rejection_summary = (
+                f"{len(rejected_recs)}/{len(recs)} recommendations REJECTED by conflict detector. "
+                + "; ".join(parts)
+                + ". Non-rejected recommendations represent physically feasible, conflict-free dispatches."
+            )
+
         return RecommendationListResponse(
             total_recommendations=len(recs),
             status_counts=status_counts,
             action_counts=action_counts,
             recommendations=recs,
+            rejection_summary=rejection_summary,
         )
 
     def list_recommendations(

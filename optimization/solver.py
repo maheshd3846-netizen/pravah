@@ -14,6 +14,7 @@ from optimization.types import (
     MovementDecision,
     OptimizationResult,
     ReasonCode,
+    compute_estimated_arrival,
 )
 from optimization.model import OptimizationProblem, OptimizationPlan
 from optimization.variables import VariableRegistry
@@ -188,9 +189,11 @@ class MilpSolver(SolverAdapter):
                     if problem.node_risks.get(dst_id, 0.0) > 0.4:
                         reasons.append(ReasonCode.STOCKOUT_RISK.value)
 
-                    # Compute realistic arrival from route travel time
-                    route_travel_h = getattr(route_obj, "base_travel_hours", 4.0) if route_obj else 4.0
-                    est_arrival = max(1, int(round(route_travel_h)))
+                    # Compute optimization-estimated arrival from route metadata.
+                    # NOTE: this is a planning estimate only. The counterfactual
+                    # simulator in evaluator.py will compute the actual arrival
+                    # including weather, route degradation, and dynamic delays.
+                    est_arrival = compute_estimated_arrival(route_obj)
 
                     decisions.append(
                         MovementDecision(
@@ -217,15 +220,24 @@ class MilpSolver(SolverAdapter):
             load = route_loads.get(r_id, 0.0)
             route_util[r_id] = round(min(1.0, load / max(1.0, float(max_cap))), 3)
 
-        # Post-solve status reclassification: if LP found no feasible movements
-        # (0 decisions) but shortages remain, honestly report INFEASIBLE rather than
-        # OPTIMAL — LP-optimal with zero flow is a network infeasibility, not a
-        # true supply optimum.
+        # -----------------------------------------------------------------------
+        # Post-solve application-level status classification
+        # -----------------------------------------------------------------------
+        # The LP solver (SciPy HiGHS) may report its own internal "optimal" when
+        # all flow variables are zero (e.g. all routes BLOCKED) because shortage
+        # variables legally absorb all demand. That is LP-correct but not an
+        # actionable plan.  We reclassify the application-level status as
+        # INFEASIBLE and record "NO_FEASIBLE_DISPATCH" in infeasibility_reasons
+        # so API consumers can distinguish this from a hard numerical ERROR.
+        # The LP solver's own status is preserved in metadata['lp_solver_status'].
         total_shortage_val = breakdown["total_shortage"]
+        lp_was_successful = True  # We are inside the success branch
         if not decisions and total_shortage_val > 0:
             final_status = OptimizationStatus.INFEASIBLE
+            infeasibility_reasons = ["NO_FEASIBLE_DISPATCH: LP solved with zero flow; all routes blocked or supply exhausted."]
         else:
             final_status = OptimizationStatus.OPTIMAL
+            infeasibility_reasons = []
 
         return OptimizationResult(
             run_id=f"RUN_{uuid.uuid4().hex[:8].upper()}",
@@ -240,12 +252,14 @@ class MilpSolver(SolverAdapter):
             total_risk_cost=breakdown["risk_cost"],
             route_utilization=route_util,
             decisions=decisions,
+            infeasibility_reasons=infeasibility_reasons,
             metadata={
                 "problem_id": problem.problem_id,
                 "solver_method": "scipy-highs",
                 "solver_classification": "HYBRID_LP_FLOW_HEURISTIC_DISPATCH",
                 "is_pure_milp": False,
                 "iterations": getattr(res, "nit", 0),
+                "lp_solver_status": "OPTIMAL",  # HiGHS own status; always optimal here
             },
         )
 

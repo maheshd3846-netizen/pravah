@@ -12,6 +12,7 @@ from optimization.types import (
     MovementDecision,
     OptimizationResult,
     ReasonCode,
+    compute_estimated_arrival,
 )
 from optimization.model import OptimizationProblem, OptimizationPlan
 
@@ -178,10 +179,10 @@ class PriorityHeuristicSolver:
                     if r_status == "DEGRADED":
                         reasons.append(ReasonCode.LOWER_RISK_DETOUR.value)
 
-                    # Compute realistic arrival from route travel time
-                    r_obj = problem.routes.get(chosen_route_id)
-                    travel_h = getattr(r_obj, "base_travel_hours", 4.0) if r_obj else 4.0
-                    est_arrival = max(1, int(round(travel_h)))
+                    # Compute optimization-estimated arrival from route metadata.
+                    # See compute_estimated_arrival() in types.py for the canonical
+                    # implementation and the Estimate vs Simulation distinction.
+                    est_arrival = compute_estimated_arrival(route_obj)
 
                     decisions.append(
                         MovementDecision(

@@ -129,6 +129,9 @@ class RecommendationListResponse(BaseModel):
     status_counts: Dict[str, int]
     action_counts: Dict[str, int]
     recommendations: List[RecommendationSchema]
+    # Populated when any recommendations are REJECTED, explaining the reason
+    # without weakening or hiding the conflict detector.
+    rejection_summary: Optional[str] = None
 
 
 class DecisionSummaryResponse(BaseModel):

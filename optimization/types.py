@@ -1,6 +1,7 @@
 """Core Types, Enums, and Data Contracts for PRAVAH Logistics Optimization Core."""
 
 from __future__ import annotations
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any
@@ -20,13 +21,85 @@ class SolverType(str, Enum):
 
 
 class OptimizationStatus(str, Enum):
-    """Status outcomes from mathematical solver execution."""
+    """Status outcomes from mathematical solver execution.
+
+    Key semantic distinction for INFEASIBLE vs OPTIMAL:
+
+    Underlying LP solver (SciPy HiGHS) may internally succeed even when all
+    flow variables are forced to zero (blocked routes, zero supply).  In that
+    case, shortage variables absorb all demand and HiGHS reports its own
+    "optimal" solution -- but this is NOT an actionable plan.
+
+    Application-level classification rules (see MilpSolver._classify_status):
+
+        INFEASIBLE:
+            LP solved but decisions == 0 AND total_shortage > 0.
+            The network has no actionable dispatch path.
+            ``infeasibility_reasons`` will include ``'NO_FEASIBLE_DISPATCH'``
+            to distinguish this from a hard numerical solver ERROR.
+
+        OPTIMAL:
+            LP solved AND (decisions >= 1 OR total_shortage == 0).
+
+    The LP solver's own status is preserved in:
+        ``metadata['lp_solver_status']``
+    for full auditability.
+    """
     OPTIMAL = "OPTIMAL"
     FEASIBLE = "FEASIBLE"
     INFEASIBLE = "INFEASIBLE"
     UNBOUNDED = "UNBOUNDED"
     TIME_LIMIT = "TIME_LIMIT"
     ERROR = "ERROR"
+
+
+def compute_estimated_arrival(route_obj: Any, fallback_hours: float = 4.0) -> int:
+    """Compute the optimization-estimated arrival hour from route base travel time.
+
+    IMPORTANT: This is the **optimization estimate**, derived at plan-generation
+    time from static route metadata.  It is NOT the simulation-observed arrival::
+
+        Optimization estimate  !=  Simulation-observed arrival
+
+    The counterfactual simulator (``optimization/evaluator.py``) is the sole
+    authoritative source for *actual* arrival hours, accounting for weather
+    delays, route DEGRADED multipliers, and dynamic vehicle release timing.
+    The optimization estimate is provided to give the user a reasonable
+    planning figure; the simulation result supersedes it.
+
+    Args:
+        route_obj: Route dataclass or dict with a ``base_travel_hours`` field.
+                   Pass ``None`` when the route object is unavailable.
+        fallback_hours: Travel time used when route_obj is None or lacks
+                        ``base_travel_hours``.  Default 4.0 hours.
+
+    Returns:
+        int >= 1.  Never zero, negative, NaN, or infinite.
+
+    Examples::
+
+        compute_estimated_arrival(route_2h)   # -> 2
+        compute_estimated_arrival(route_7_6h) # -> 8   (standard rounding)
+        compute_estimated_arrival(None)       # -> 4   (fallback)
+        compute_estimated_arrival(route_0h)  # -> 1   (min-clamp)
+    """
+    if route_obj is None:
+        raw = fallback_hours
+    elif isinstance(route_obj, dict):
+        raw = route_obj.get("base_travel_hours", fallback_hours)
+    else:
+        raw = getattr(route_obj, "base_travel_hours", fallback_hours)
+
+    # Guard: NaN / Inf / non-numeric / negative
+    try:
+        raw = float(raw)
+    except (TypeError, ValueError):
+        raw = fallback_hours
+
+    if not math.isfinite(raw) or raw < 0:
+        raw = fallback_hours
+
+    return max(1, int(round(raw)))
 
 
 class ReasonCode(str, Enum):
