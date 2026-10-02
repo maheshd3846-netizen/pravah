@@ -1,0 +1,252 @@
+{
+  "verdict": "NOT READY -- 3 gate(s) failed",
+  "passed": 29,
+  "failed": 3,
+  "total": 32,
+  "gates": {
+    "G3.1_disruptions": {
+      "PASS": 1,
+      "ev": {
+        "types": [
+          "DEMAND_SURGE",
+          "ROUTE_BLOCKED",
+          "WEATHER_DEGRADATION",
+          "VEHICLE_UNAVAILABLE"
+        ],
+        "blocked": 1,
+        "degraded": 0,
+        "unavail": 2
+      }
+    },
+    "G4.1_risk": {
+      "PASS": 1,
+      "ev": {
+        "count": 15,
+        "max_risk": 0.259
+      }
+    },
+    "G4.2_problem": {
+      "PASS": 1,
+      "ev": {
+        "id": "OPT_PROB_352B5802",
+        "demand": 1400.0
+      }
+    },
+    "G4.3_opt": {
+      "PASS": 1,
+      "ev": {
+        "run_id": "RUN_9F29B948",
+        "status": "OPTIMAL",
+        "lp_status": "OPTIMAL",
+        "solver_class": "HYBRID_LP_FLOW_HEURISTIC_DISPATCH",
+        "is_pure_milp": "False",
+        "decisions": 55,
+        "shortage": 0.0
+      }
+    },
+    "G4.4_cf": {
+      "PASS": 1,
+      "ev": {
+        "eval_id": "EVAL_8AA76257",
+        "status": "DEGRADED",
+        "unmet_delta": 2573.1,
+        "stockout_delta": 69.0,
+        "keys": [
+          "average_delay_hours",
+          "fulfillment_rate_percent",
+          "stockout_duration_hours",
+          "stockout_events",
+          "transit_hours",
+          "transport_distance_km",
+          "unmet_demand"
+        ]
+      }
+    },
+    "G4.5_recs": {
+      "PASS": 1,
+      "ev": {
+        "total": 55,
+        "first_id": "REC_C062D2EF",
+        "audit_ok": 1
+      }
+    },
+    "G5.1_infeasible_all_blocked": {
+      "PASS": 1,
+      "ev": {
+        "app_status": "INFEASIBLE",
+        "lp_status": "OPTIMAL",
+        "decisions": 0,
+        "shortage": 1400.0,
+        "reason": "NO_FEASIBLE_DISPATCH: LP solved with zero flow; all routes blocked or supply exh"
+      }
+    },
+    "G5.2_optimal_normal": {
+      "PASS": 1,
+      "ev": {
+        "status": "OPTIMAL",
+        "decisions": 55
+      }
+    },
+    "G5.3_optimal_zero_demand": {
+      "PASS": 1,
+      "ev": {
+        "status": "OPTIMAL"
+      }
+    },
+    "G5.4_hybrid_label": {
+      "PASS": 1,
+      "ev": {
+        "label": "HYBRID_LP_FLOW_HEURISTIC_DISPATCH"
+      }
+    },
+    "G5.5_supply_constraints": {
+      "PASS": 1,
+      "ev": {
+        "checks": 40,
+        "all_pass": 1
+      }
+    },
+    "G6.1_utility": {
+      "PASS": 1,
+      "ev": {
+        "cases": 11,
+        "all_pass": 1
+      }
+    },
+    "G6.2_lp_timing": {
+      "PASS": 1,
+      "ev": {
+        "unique_arrivals": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "not_all_4": 1
+      }
+    },
+    "G6.3_distinction": {
+      "PASS": 1,
+      "ev": {
+        "documented": 1
+      }
+    },
+    "G7.1_rejection_summary": {
+      "PASS": 1,
+      "ev": {
+        "candidates": 55,
+        "rejected": 43,
+        "feasible": 12,
+        "presentation": "12 FEASIBLE / 43 FILTERED",
+        "summary_present": 1
+      }
+    },
+    "G7.2_conflict_details": {
+      "PASS": 0,
+      "error": ""
+    },
+    "G8.1_determinism": {
+      "PASS": 1,
+      "ev": {
+        "status": "DEGRADED",
+        "unmet_delta": 2573.1,
+        "match": 1
+      }
+    },
+    "G8.2_valid_status": {
+      "PASS": 0,
+      "error": "type object 'EvaluationStatus' has no attribute 'NO_CHANGE'"
+    },
+    "G8.3_delta_keys": {
+      "PASS": 0,
+      "error": "Missing: {'fulfillment_rate'}"
+    },
+    "G9.1_evidence": {
+      "PASS": 1,
+      "ev": {
+        "evidence_items": 30
+      }
+    },
+    "G9.2_audit": {
+      "PASS": 1,
+      "ev": {
+        "recs_checked": 5
+      }
+    },
+    "G9.3_conf_degrades": {
+      "PASS": 1,
+      "ev": {
+        "READY": 0.727,
+        "INSUFFICIENT": 0.477
+      }
+    },
+    "G9.4_insuff_blocks_high": {
+      "PASS": 1,
+      "ev": {
+        "total": 55,
+        "high_conf_blocked": 1
+      }
+    },
+    "G12.1_canonical_determinism": {
+      "PASS": 1,
+      "ev": {
+        "decisions": 55,
+        "objective": 15298.5,
+        "status": "OPTIMAL"
+      }
+    },
+    "G13.1_all_routes_blocked": {
+      "PASS": 1,
+      "ev": {
+        "status": "INFEASIBLE",
+        "reasons": 1
+      }
+    },
+    "G13.2_zero_inventory": {
+      "PASS": 1,
+      "ev": {
+        "status": "OPTIMAL"
+      }
+    },
+    "G13.3_all_vehicles_unavail": {
+      "PASS": 1,
+      "ev": {
+        "status": "OPTIMAL"
+      }
+    },
+    "G13.4_insufficient_data": {
+      "PASS": 1,
+      "ev": {
+        "total": 55
+      }
+    },
+    "G13.5_compound": {
+      "PASS": 1,
+      "ev": {
+        "eval": "DEGRADED",
+        "recs": 55
+      }
+    },
+    "G13.6_empty_decisions": {
+      "PASS": 1,
+      "ev": {
+        "total": 0,
+        "holds": 0
+      }
+    },
+    "G16.1_not_pure_milp": {
+      "PASS": 1,
+      "ev": {
+        "label": "HYBRID_LP_FLOW_HEURISTIC_DISPATCH",
+        "not_milp": 1
+      }
+    },
+    "G16.2_computed_deltas": {
+      "PASS": 1,
+      "ev": {
+        "unmet_delta": 2573.1
+      }
+    }
+  }
+}

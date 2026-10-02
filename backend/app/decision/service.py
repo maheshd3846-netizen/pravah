@@ -130,15 +130,21 @@ class DecisionService:
             status_counts[r.status] = status_counts.get(r.status, 0) + 1
             action_counts[r.action_type] = action_counts.get(r.action_type, 0) + 1
 
-        # Build rejection summary to help consumers understand REJECTED status
-        # without weakening the conflict detector.
+        # Build rejection summary covering ALL rejection root causes:
+        #   (1) Physical conflicts (vehicle/route/inventory) — conflict_detected=True
+        #   (2) Counterfactual-degradation — conflict_detected=False but CF=DEGRADED
+        #       means the plan worsens logistics outcomes vs baseline
         rejection_summary: Optional[str] = None
         rejected_recs = [r for r in recs if r.status == "REJECTED"]
         if rejected_recs:
-            # Categorise conflict types for a clear, actionable explanation
-            vehicle_conflicts = sum(1 for r in rejected_recs if any("Vehicle conflict" in c for c in r.conflict_details))
-            route_blocks = sum(1 for r in rejected_recs if any("BLOCKED" in c for c in r.conflict_details))
-            inventory_conflicts = sum(1 for r in rejected_recs if any("exceed" in c.lower() for c in r.conflict_details))
+            # Physical-conflict rejections (conflict detector)
+            physical_rejected = [r for r in rejected_recs if r.conflict_detected]
+            vehicle_conflicts = sum(1 for r in physical_rejected if any("Vehicle conflict" in c for c in r.conflict_details))
+            route_blocks = sum(1 for r in physical_rejected if any("BLOCKED" in c for c in r.conflict_details))
+            inventory_conflicts = sum(1 for r in physical_rejected if any("exceed" in c.lower() for c in r.conflict_details))
+
+            # Counterfactual-degradation rejections (no physical conflict, but CF DEGRADED)
+            cf_degraded_rejected = [r for r in rejected_recs if not r.conflict_detected]
 
             parts = []
             if vehicle_conflicts:
@@ -151,14 +157,21 @@ class DecisionService:
                 parts.append(f"{route_blocks} rejected due to BLOCKED route corridors")
             if inventory_conflicts:
                 parts.append(f"{inventory_conflicts} rejected due to aggregate inventory over-commitment")
-            other = len(rejected_recs) - vehicle_conflicts - route_blocks - inventory_conflicts
-            if other > 0:
-                parts.append(f"{other} rejected for other physical constraint violations")
+            other_physical = len(physical_rejected) - vehicle_conflicts - route_blocks - inventory_conflicts
+            if other_physical > 0:
+                parts.append(f"{other_physical} rejected for other physical constraint violations")
+            if cf_degraded_rejected:
+                parts.append(
+                    f"{len(cf_degraded_rejected)} rejected by counterfactual evaluation: "
+                    f"the simulation shows these dispatches DEGRADE logistics outcomes vs baseline "
+                    f"(e.g., unmet demand increases), indicating the plan should not be executed "
+                    f"under current disruption conditions"
+                )
 
             rejection_summary = (
-                f"{len(rejected_recs)}/{len(recs)} recommendations REJECTED by conflict detector. "
+                f"{len(rejected_recs)}/{len(recs)} recommendations REJECTED. "
                 + "; ".join(parts)
-                + ". Non-rejected recommendations represent physically feasible, conflict-free dispatches."
+                + ". Non-rejected recommendations represent conflict-free, counterfactually-verified dispatches."
             )
 
         return RecommendationListResponse(
