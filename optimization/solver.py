@@ -188,6 +188,10 @@ class MilpSolver(SolverAdapter):
                     if problem.node_risks.get(dst_id, 0.0) > 0.4:
                         reasons.append(ReasonCode.STOCKOUT_RISK.value)
 
+                    # Compute realistic arrival from route travel time
+                    route_travel_h = getattr(route_obj, "base_travel_hours", 4.0) if route_obj else 4.0
+                    est_arrival = max(1, int(round(route_travel_h)))
+
                     decisions.append(
                         MovementDecision(
                             decision_id=f"DEC_OPT_{len(decisions)+1:03d}",
@@ -198,7 +202,7 @@ class MilpSolver(SolverAdapter):
                             route_id=route_id,
                             vehicle_id=veh_id,
                             dispatch_hour=0,
-                            estimated_arrival_hour=4,
+                            estimated_arrival_hour=est_arrival,
                             priority=getattr(problem.nodes.get(dst_id), "priority", 3),
                             reason_codes=reasons,
                             rationale=f"Optimal multi-commodity allocation satisfying {batch_qty:.1f} units {item} to {dst_id}.",
@@ -213,15 +217,25 @@ class MilpSolver(SolverAdapter):
             load = route_loads.get(r_id, 0.0)
             route_util[r_id] = round(min(1.0, load / max(1.0, float(max_cap))), 3)
 
+        # Post-solve status reclassification: if LP found no feasible movements
+        # (0 decisions) but shortages remain, honestly report INFEASIBLE rather than
+        # OPTIMAL — LP-optimal with zero flow is a network infeasibility, not a
+        # true supply optimum.
+        total_shortage_val = breakdown["total_shortage"]
+        if not decisions and total_shortage_val > 0:
+            final_status = OptimizationStatus.INFEASIBLE
+        else:
+            final_status = OptimizationStatus.OPTIMAL
+
         return OptimizationResult(
             run_id=f"RUN_{uuid.uuid4().hex[:8].upper()}",
-            status=OptimizationStatus.OPTIMAL,
+            status=final_status,
             solver_type=SolverType.MILP,
             objective_value=breakdown["objective_value"],
             execution_time_ms=round(exec_time_ms, 2),
             demand_policy=problem.demand_policy,
             total_transport_cost=breakdown["transport_cost"],
-            total_shortage=breakdown["total_shortage"],
+            total_shortage=total_shortage_val,
             total_delay=breakdown["delay_cost"],
             total_risk_cost=breakdown["risk_cost"],
             route_utilization=route_util,

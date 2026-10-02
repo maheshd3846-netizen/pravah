@@ -178,6 +178,11 @@ class PriorityHeuristicSolver:
                     if r_status == "DEGRADED":
                         reasons.append(ReasonCode.LOWER_RISK_DETOUR.value)
 
+                    # Compute realistic arrival from route travel time
+                    r_obj = problem.routes.get(chosen_route_id)
+                    travel_h = getattr(r_obj, "base_travel_hours", 4.0) if r_obj else 4.0
+                    est_arrival = max(1, int(round(travel_h)))
+
                     decisions.append(
                         MovementDecision(
                             decision_id=f"DEC_HEUR_{len(decisions)+1:03d}",
@@ -188,7 +193,7 @@ class PriorityHeuristicSolver:
                             route_id=chosen_route_id,
                             vehicle_id=veh_id,
                             dispatch_hour=0,
-                            estimated_arrival_hour=4,
+                            estimated_arrival_hour=est_arrival,
                             priority=def_info["priority"],
                             reason_codes=reasons,
                             rationale=f"Heuristic allocation to relieve {alloc_qty:.1f} units shortage at {target_nid}.",
