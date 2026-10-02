@@ -229,6 +229,8 @@ class MilpSolver(SolverAdapter):
             metadata={
                 "problem_id": problem.problem_id,
                 "solver_method": "scipy-highs",
+                "solver_classification": "HYBRID_LP_FLOW_HEURISTIC_DISPATCH",
+                "is_pure_milp": False,
                 "iterations": getattr(res, "nit", 0),
             },
         )
