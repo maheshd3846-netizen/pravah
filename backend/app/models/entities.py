@@ -155,13 +155,28 @@ class ForecastModel(Base):
 
     id = Column(String(64), primary_key=True, index=True)
     node_id = Column(String(64), ForeignKey("nodes.id"), nullable=False)
-    item = Column(String(32), nullable=False)
-    timestamp_hour = Column(Integer, nullable=False, index=True)
-    forecast_value = Column(Float, nullable=False)
-    lower_bound_p10 = Column(Float, nullable=False)
-    upper_bound_p90 = Column(Float, nullable=False)
-    model_version = Column(String(64), default="xgboost_v1")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    item_id = Column(String(32), nullable=False)
+    forecast_time = Column(Integer, nullable=False, index=True)
+    horizon_hours = Column(Integer, nullable=False, default=24)
+    p50 = Column(Float, nullable=False)
+    p80 = Column(Float, nullable=False)
+    p95 = Column(Float, nullable=False)
+    model_version = Column(String(64), default="xgb-demand-v1")
+    feature_version = Column(String(64), default="demand-features-v1")
+    generated_at = Column(DateTime, default=datetime.utcnow)
+
+    # Aliases for backwards compatibility
+    @property
+    def item(self) -> str:
+        return self.item_id
+
+    @property
+    def forecast_value(self) -> float:
+        return self.p50
+
+    @property
+    def timestamp_hour(self) -> int:
+        return self.forecast_time
 
 
 class RiskScoreModel(Base):
