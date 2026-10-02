@@ -1,42 +1,65 @@
-:root {
-  --bg-primary: #0a0e17;
-  --bg-surface: #101623;
-  --bg-surface-elevated: #182235;
-  --bg-surface-highlight: #1e293b;
-  --bg-surface-translucent: rgba(16, 22, 35, 0.85);
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap');
 
+:root {
+  /* Tactical Military Color Matrix */
+  --bg-primary: #06090f;
+  --bg-surface: rgba(12, 19, 32, 0.88);
+  --bg-surface-elevated: rgba(18, 27, 44, 0.94);
+  --bg-surface-highlight: #192438;
+  --bg-surface-translucent: rgba(12, 19, 32, 0.78);
+  --bg-glass: rgba(10, 16, 28, 0.72);
+
+  /* Precision Tactical Borders */
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-medium: rgba(255, 255, 255, 0.16);
-  --border-accent: rgba(37, 99, 235, 0.5);
+  --border-accent: rgba(0, 229, 255, 0.45);
+  --border-amber: rgba(245, 158, 11, 0.4);
+  --border-red: rgba(239, 68, 68, 0.45);
 
+  /* Typography Matrix */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-dim: #475569;
 
+  /* Tactical Accents */
+  --accent-cyan: #00e5ff;
   --accent-blue: #3b82f6;
-  --accent-cyan: #06b6d4;
   --accent-indigo: #6366f1;
   --accent-purple: #8b5cf6;
+  --accent-amber: #f59e0b;
 
+  /* Military Status Palettes */
   --status-ready: #10b981;
   --status-ready-bg: rgba(16, 185, 129, 0.12);
+  --status-ready-border: rgba(16, 185, 129, 0.35);
+
   --status-warning: #f59e0b;
   --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-warning-border: rgba(245, 158, 11, 0.35);
+
   --status-critical: #ef4444;
-  --status-critical-bg: rgba(239, 68, 68, 0.15);
+  --status-critical-bg: rgba(239, 68, 68, 0.14);
+  --status-critical-border: rgba(239, 68, 68, 0.4);
+
   --status-neutral: #64748b;
   --status-neutral-bg: rgba(100, 116, 139, 0.12);
+  --status-neutral-border: rgba(100, 116, 139, 0.25);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Rajdhani', 'Chakra Petch', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  /* Tactical Depth & Glow */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
+  --glow-cyan: 0 0 15px rgba(0, 229, 255, 0.25);
+  --glow-red: 0 0 15px rgba(239, 68, 68, 0.25);
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
   --radius-lg: 8px;
 }
 
@@ -48,6 +71,9 @@
 
 body {
   background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(30, 58, 138, 0.15), transparent),
+    radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.05), transparent 40%);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -64,25 +90,32 @@ body {
   flex-direction: column;
 }
 
-/* Custom Scrollbar */
+/* Precision Military Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: rgba(6, 9, 15, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--accent-cyan);
 }
 
-/* Typography Helpers */
+/* Typography Hierarchy */
 .font-mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .text-xs { font-size: 11px; }
@@ -105,127 +138,178 @@ body {
 .text-amber { color: var(--status-warning); }
 .text-rose { color: var(--status-critical); }
 
-/* Common Containers */
+/* Common Layout Containers */
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
   background-color: var(--bg-primary);
+  position: relative;
+}
+
+/* Subtle Tactical Reticle Grid Background Overlay */
+.app-container::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 1;
+  opacity: 0.6;
 }
 
 .header {
-  height: 48px;
-  background-color: var(--bg-surface);
+  height: 50px;
+  background-color: rgba(9, 14, 24, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 18px;
   flex-shrink: 0;
   z-index: 40;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .status-bar {
-  height: 36px;
-  background-color: #0c121d;
+  height: 34px;
+  background-color: rgba(6, 10, 18, 0.95);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 18px;
   flex-shrink: 0;
   font-size: 11px;
+  letter-spacing: 0.03em;
+  z-index: 35;
 }
 
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  padding: 8px 16px;
-  background-color: var(--bg-primary);
+  gap: 10px;
+  padding: 8px 18px;
+  background-color: transparent;
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .kpi-card {
-  background-color: var(--bg-surface);
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: background-color 0.2s;
+}
+
 .kpi-card:hover {
-  border-color: var(--border-medium);
+  border-color: rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.5);
 }
+
+.kpi-card:hover::before {
+  background-color: var(--accent-cyan);
+}
+
 .kpi-label {
-  font-size: 10px;
+  font-family: var(--font-heading);
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
+  font-weight: 600;
 }
+
 .kpi-value {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-primary);
   margin-top: 2px;
+  letter-spacing: -0.02em;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 16px 16px 16px;
+  padding: 6px 18px 18px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  z-index: 10;
 }
 
 /* Badges & Tags */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
+  gap: 5px;
+  padding: 2px 7px;
   border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   font-family: var(--font-mono);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .badge-ready, .badge-verified, .badge-improved, .badge-available {
   background-color: var(--status-ready-bg);
-  color: var(--status-ready);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  border: 1px solid var(--status-ready-border);
 }
 
 .badge-warning, .badge-mixed, .badge-degraded, .badge-moderate {
   background-color: var(--status-warning-bg);
-  color: var(--status-warning);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  border: 1px solid var(--status-warning-border);
 }
 
 .badge-critical, .badge-rejected, .badge-blocked, .badge-high {
   background-color: var(--status-critical-bg);
-  color: var(--status-critical);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  border: 1px solid var(--status-critical-border);
 }
 
 .badge-neutral, .badge-proposed, .badge-inconclusive {
   background-color: var(--status-neutral-bg);
-  color: var(--text-secondary);
+  color: #cbd5e1;
   border: 1px solid var(--border-medium);
 }
 
 .badge-cyan {
-  background-color: rgba(6, 182, 212, 0.12);
+  background-color: rgba(0, 229, 255, 0.1);
   color: var(--accent-cyan);
-  border: 1px solid rgba(6, 182, 212, 0.3);
+  border: 1px solid rgba(0, 229, 255, 0.35);
 }
 
 /* Command Center Layout Grid */
@@ -242,85 +326,105 @@ body {
   gap: 12px;
 }
 
+/* Cards & Panel Chassis */
 .card-panel {
-  background-color: var(--bg-surface);
+  background: var(--bg-surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--shadow-md);
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.card-panel:hover {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .panel-header {
-  padding: 8px 12px;
-  background-color: rgba(24, 34, 53, 0.6);
+  padding: 8px 14px;
+  background: linear-gradient(180deg, rgba(22, 33, 52, 0.7) 0%, rgba(13, 20, 32, 0.5) 100%);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .panel-title {
-  font-size: 11px;
+  font-family: var(--font-heading);
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .panel-body {
-  padding: 12px;
+  padding: 14px;
   flex: 1;
   overflow-y: auto;
 }
 
-/* Buttons */
+/* Realistic Tactical Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s ease;
-  font-family: var(--font-sans);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--font-heading);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  position: relative;
+  outline: none;
 }
 
 .btn-primary {
-  background-color: #2563eb;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
   border-color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #60a5fa;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-secondary {
-  background-color: var(--bg-surface-elevated);
+  background: rgba(22, 33, 52, 0.6);
   color: var(--text-primary);
   border-color: var(--border-medium);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--bg-surface-highlight);
-  border-color: var(--text-secondary);
+  background: rgba(30, 45, 71, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .btn-danger {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: var(--status-critical);
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
   border-color: rgba(239, 68, 68, 0.4);
 }
 .btn-danger:hover:not(:disabled) {
-  background-color: rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
 }
 
 .btn:disabled {
@@ -328,27 +432,29 @@ body {
   cursor: not-allowed;
 }
 
-/* Pulse Animation */
+/* Tactical Pulse Indicator */
 @keyframes pulseGlow {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.8; }
+  0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.3); }
+  100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
 }
 
 .pulse-indicator {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  animation: pulseGlow 2s infinite ease-in-out;
+  animation: pulseGlow 2.2s infinite ease-in-out;
 }
 
 /* Tooltip & Popups */
 .custom-tooltip {
   position: absolute;
   background-color: var(--bg-surface-elevated);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-medium);
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-size: 11px;
   color: var(--text-primary);

@@ -98,45 +98,71 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
         bottom: '24px',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: '560px',
-        backgroundColor: '#0c1322',
-        border: '1px solid #38bdf8',
+        width: '580px',
+        backgroundColor: 'rgba(10, 16, 28, 0.94)',
+        border: '1px solid rgba(0, 229, 255, 0.45)',
         borderRadius: '8px',
-        padding: '16px 20px',
-        boxShadow: 'var(--shadow-lg), 0 0 25px rgba(56, 189, 248, 0.2)',
+        padding: '16px 22px',
+        boxShadow: 'var(--shadow-lg), 0 0 30px rgba(0, 229, 255, 0.2)',
         zIndex: 200,
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge badge-cyan" style={{ fontSize: '9px' }}>
+          <span className="badge badge-cyan" style={{ fontSize: '9px', padding: '2px 6px' }}>
             DEMO MODE (STEP {currentStep + 1} OF {steps.length})
           </span>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#f8fafc' }}>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#f8fafc',
+              fontFamily: 'var(--font-heading)',
+              letterSpacing: '0.05em',
+            }}
+          >
             {step.title}
           </span>
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '13px' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            fontSize: '14px',
+            padding: '2px',
+          }}
+          title="Exit Demo Tour"
         >
           ✕
         </button>
       </div>
 
-      <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '12px' }}>
+      <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55, marginBottom: '14px' }}>
         {step.desc}
       </div>
 
       {/* Progress Bar */}
-      <div style={{ height: '3px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '12px' }}>
+      <div
+        style={{
+          height: '3px',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          marginBottom: '14px',
+        }}
+      >
         <div
           style={{
             height: '100%',
             width: `${((currentStep + 1) / steps.length) * 100}%`,
-            backgroundColor: '#38bdf8',
-            transition: 'width 0.2s ease',
+            background: 'linear-gradient(90deg, #0284c7 0%, #00e5ff 100%)',
+            boxShadow: '0 0 8px #00e5ff',
+            transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         />
       </div>
@@ -147,7 +173,7 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
           onClick={handlePrev}
           disabled={currentStep === 0}
           className="btn btn-secondary"
-          style={{ padding: '4px 10px', fontSize: '10px' }}
+          style={{ padding: '5px 12px', fontSize: '10px' }}
         >
           ◀ PREVIOUS
         </button>
@@ -156,14 +182,19 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
           <button
             onClick={() => onStepChange(currentStep)}
             className="btn btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '10px', color: '#38bdf8', borderColor: '#38bdf8' }}
+            style={{
+              padding: '5px 12px',
+              fontSize: '10px',
+              color: '#00e5ff',
+              borderColor: 'rgba(0, 229, 255, 0.4)',
+            }}
           >
             {step.action}
           </button>
           <button
             onClick={handleNext}
             className="btn btn-primary"
-            style={{ padding: '4px 12px', fontSize: '10px' }}
+            style={{ padding: '5px 14px', fontSize: '10px' }}
           >
             {currentStep === steps.length - 1 ? 'COMPLETE' : 'NEXT STEP ▶'}
           </button>

@@ -71,12 +71,19 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
     <div className="card-panel" style={{ height: '100%' }}>
       <div className="panel-header">
         <div className="panel-title">
-          <span style={{ color: '#8b5cf6' }}>📈</span> PREDICTIVE INTELLIGENCE & INVENTORY OUTLOOK
+          <span style={{ color: '#00e5ff', fontSize: '13px' }}>📈</span>
+          <span>PREDICTIVE INTELLIGENCE & INVENTORY OUTLOOK</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="badge badge-cyan">{nodeCode}</span>
           <span className="badge badge-neutral">{itemId}</span>
-          <span style={{ fontSize: '10px', color: '#64748b' }}>
+          <span
+            style={{
+              fontSize: '10px',
+              color: '#64748b',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
             Model: {forecastData?.model_version || 'XGBoost Quantile'}
           </span>
         </div>
@@ -86,17 +93,36 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
         {/* Left: Multi-Quantile Demand Forecast Chart */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-heading)',
+                letterSpacing: '0.06em',
+              }}
+            >
               DEMAND FORECAST & UNCERTAINTY BANDS
             </span>
-            <div style={{ display: 'flex', gap: '8px', fontSize: '9px' }}>
+            <div style={{ display: 'flex', gap: '10px', fontSize: '9px', fontFamily: 'var(--font-mono)' }}>
               <span style={{ color: '#38bdf8' }}>— P50 (Median)</span>
-              <span style={{ color: '#f59e0b' }}>— P80 (Planning)</span>
-              <span style={{ color: '#ef4444' }}>— P95 (Stress)</span>
+              <span style={{ color: '#f59e0b' }}>-- P80 (Planning)</span>
+              <span style={{ color: '#ef4444' }}>·· P95 (Stress)</span>
             </div>
           </div>
 
-          <div style={{ position: 'relative', width: '100%', height: `${chartHeight}px`, backgroundColor: '#070b13', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: `${chartHeight}px`,
+              backgroundColor: '#070b13',
+              borderRadius: '5px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              overflow: 'hidden',
+            }}
+          >
             {isLoading ? (
               <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '11px' }}>
                 Computing quantile inference...
@@ -112,14 +138,36 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
                 viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                 onMouseLeave={() => setHoverIndex(null)}
               >
+                <defs>
+                  <linearGradient id="forecast-band-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.2" />
+                    <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.08" />
+                  </linearGradient>
+                </defs>
+
                 {/* Horizontal Gridlines */}
                 {[0.25, 0.5, 0.75, 1.0].map((ratio) => {
                   const yVal = maxVal * ratio;
                   const y = getY(yVal);
                   return (
                     <g key={ratio}>
-                      <line x1={padLeft} y1={y} x2={chartWidth - padRight} y2={y} stroke="rgba(255, 255, 255, 0.06)" strokeDasharray="2,2" />
-                      <text x={padLeft - 6} y={y + 3} textAnchor="end" fill="#64748b" fontSize="8" fontFamily="var(--font-mono)">
+                      <line
+                        x1={padLeft}
+                        y1={y}
+                        x2={chartWidth - padRight}
+                        y2={y}
+                        stroke="rgba(255, 255, 255, 0.06)"
+                        strokeDasharray="2,2"
+                      />
+                      <text
+                        x={padLeft - 6}
+                        y={y + 3}
+                        textAnchor="end"
+                        fill="#64748b"
+                        fontSize="8"
+                        fontFamily="var(--font-mono)"
+                      >
                         {yVal.toFixed(0)}
                       </text>
                     </g>
@@ -128,13 +176,13 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
 
                 {/* Confidence Band: P50 to P95 */}
                 {bandPoints && (
-                  <polygon points={bandPoints} fill="rgba(59, 130, 246, 0.12)" />
+                  <polygon points={bandPoints} fill="url(#forecast-band-grad)" />
                 )}
 
                 {/* Lines */}
                 <polyline fill="none" stroke="#38bdf8" strokeWidth={2} points={p50Polyline} />
-                <polyline fill="none" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3,2" points={p80Polyline} />
-                <polyline fill="none" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="2,2" points={p95Polyline} />
+                <polyline fill="none" stroke="#f59e0b" strokeWidth={1.6} strokeDasharray="4,3" points={p80Polyline} />
+                <polyline fill="none" stroke="#ef4444" strokeWidth={1.6} strokeDasharray="2,2" points={p95Polyline} />
 
                 {/* Hover Guide */}
                 {hoverIndex !== null && hoverIndex < p50.length && (
@@ -144,12 +192,12 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
                       y1={padTop}
                       x2={getX(hoverIndex)}
                       y2={chartHeight - padBottom}
-                      stroke="#cbd5e1"
+                      stroke="rgba(255, 255, 255, 0.4)"
                       strokeDasharray="2,2"
                     />
-                    <circle cx={getX(hoverIndex)} cy={getY(p50[hoverIndex])} r={3} fill="#38bdf8" />
-                    <circle cx={getX(hoverIndex)} cy={getY(p80[hoverIndex])} r={3} fill="#f59e0b" />
-                    <circle cx={getX(hoverIndex)} cy={getY(p95[hoverIndex])} r={3} fill="#ef4444" />
+                    <circle cx={getX(hoverIndex)} cy={getY(p50[hoverIndex])} r={3.5} fill="#38bdf8" stroke="#070b13" strokeWidth={1} />
+                    <circle cx={getX(hoverIndex)} cy={getY(p80[hoverIndex])} r={3.5} fill="#f59e0b" stroke="#070b13" strokeWidth={1} />
+                    <circle cx={getX(hoverIndex)} cy={getY(p95[hoverIndex])} r={3.5} fill="#ef4444" stroke="#070b13" strokeWidth={1} />
                   </g>
                 )}
 
@@ -174,7 +222,7 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
                     y={chartHeight - 8}
                     textAnchor="middle"
                     fill="#64748b"
-                    fontSize="8"
+                    fontSize="8.5"
                     fontFamily="var(--font-mono)"
                   >
                     +{hIdx}h
@@ -192,12 +240,12 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
                   left: `${Math.min(chartWidth - 140, Math.max(padLeft, getX(hoverIndex) + 10))}px`,
                 }}
               >
-                <div style={{ fontWeight: 700, marginBottom: '2px', color: '#f8fafc' }}>
+                <div style={{ fontWeight: 700, marginBottom: '2px', color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>
                   Hour +{hoverIndex}
                 </div>
-                <div style={{ color: '#38bdf8' }}>P50: {p50[hoverIndex].toFixed(1)} u/h</div>
-                <div style={{ color: '#f59e0b' }}>P80: {p80[hoverIndex].toFixed(1)} u/h</div>
-                <div style={{ color: '#ef4444' }}>P95: {p95[hoverIndex].toFixed(1)} u/h</div>
+                <div style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>P50: {p50[hoverIndex].toFixed(1)} u/h</div>
+                <div style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>P80: {p80[hoverIndex].toFixed(1)} u/h</div>
+                <div style={{ color: '#ef4444', fontFamily: 'var(--font-mono)' }}>P95: {p95[hoverIndex].toFixed(1)} u/h</div>
               </div>
             )}
           </div>
@@ -206,34 +254,97 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
         {/* Right: Projected Inventory Trajectory & Stockout Horizon */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-heading)',
+                letterSpacing: '0.06em',
+              }}
+            >
               STOCKOUT & SAFETY STOCK OUTLOOK
             </span>
             <span className="badge badge-warning">P80 CONSUMPTION</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '8px' }}>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '9px', color: '#64748b' }}>STOCKOUT PROB</div>
-              <div className="font-mono" style={{ fontSize: '15px', fontWeight: 800, color: forecastData?.stockout_probability && forecastData.stockout_probability > 0.5 ? '#ef4444' : '#10b981' }}>
+            <div
+              style={{
+                backgroundColor: 'rgba(16, 24, 40, 0.75)',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                STOCKOUT PROB
+              </div>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 800,
+                  color: forecastData?.stockout_probability && forecastData.stockout_probability > 0.5 ? '#ef4444' : '#10b981',
+                  marginTop: '2px',
+                }}
+              >
                 {forecastData?.stockout_probability !== undefined && forecastData?.stockout_probability !== null
                   ? `${(forecastData.stockout_probability * 100).toFixed(0)}%`
                   : 'N/A'}
               </div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '9px', color: '#64748b' }}>SAFETY BREACH</div>
-              <div className="font-mono" style={{ fontSize: '15px', fontWeight: 800, color: '#f59e0b' }}>
+            <div
+              style={{
+                backgroundColor: 'rgba(16, 24, 40, 0.75)',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                SAFETY BREACH
+              </div>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 800,
+                  color: '#f59e0b',
+                  marginTop: '2px',
+                }}
+              >
                 {forecastData?.time_to_safety_stock_hours !== undefined && forecastData?.time_to_safety_stock_hours !== null
                   ? `+${forecastData.time_to_safety_stock_hours}h`
                   : 'N/A'}
               </div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '9px', color: '#64748b' }}>TIME TO ZERO</div>
-              <div className="font-mono" style={{ fontSize: '15px', fontWeight: 800, color: '#ef4444' }}>
+            <div
+              style={{
+                backgroundColor: 'rgba(16, 24, 40, 0.75)',
+                padding: '8px 10px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                TIME TO ZERO
+              </div>
+              <div
+                className="font-mono"
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 800,
+                  color: '#ef4444',
+                  marginTop: '2px',
+                }}
+              >
                 {forecastData?.time_to_zero_hours !== undefined && forecastData?.time_to_zero_hours !== null
                   ? `+${forecastData.time_to_zero_hours}h`
                   : 'N/A'}
@@ -242,10 +353,28 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
           </div>
 
           {/* Mini Inventory Curve SVG */}
-          <div style={{ flex: 1, backgroundColor: '#070b13', borderRadius: '4px', border: '1px solid var(--border-subtle)', position: 'relative' }}>
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: '#070b13',
+              borderRadius: '5px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
             <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight - 40}`}>
               {/* Zero Line */}
-              <line x1={padLeft} y1={getInvY(0)} x2={chartWidth - padRight} y2={getInvY(0)} stroke="#ef4444" strokeWidth={1} strokeDasharray="3,3" />
+              <line
+                x1={padLeft}
+                y1={getInvY(0)}
+                x2={chartWidth - padRight}
+                y2={getInvY(0)}
+                stroke="#ef4444"
+                strokeWidth={1}
+                strokeDasharray="3,3"
+                opacity={0.8}
+              />
               <text x={padLeft - 6} y={getInvY(0) + 3} textAnchor="end" fill="#ef4444" fontSize="8" fontFamily="var(--font-mono)">
                 0
               </text>
@@ -261,6 +390,7 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
                     stroke="#f59e0b"
                     strokeWidth={1}
                     strokeDasharray="2,2"
+                    opacity={0.7}
                   />
                   <text
                     x={chartWidth - padRight + 2}
@@ -276,7 +406,7 @@ export const ForecastPanel: React.FC<ForecastPanelProps> = ({
 
               {/* Trajectory */}
               {invPolyline && (
-                <polyline fill="none" stroke="#10b981" strokeWidth={2} points={invPolyline} />
+                <polyline fill="none" stroke="#10b981" strokeWidth={2.2} points={invPolyline} />
               )}
             </svg>
           </div>

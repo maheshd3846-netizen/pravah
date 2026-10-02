@@ -47,7 +47,8 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
     <div className="card-panel" style={{ height: '100%' }}>
       <div className="panel-header">
         <div className="panel-title">
-          <span style={{ color: '#06b6d4' }}>⚖</span> COUNTERFACTUAL VERIFICATION & TRADEOFF ANALYSIS
+          <span style={{ color: '#00e5ff', fontSize: '13px' }}>⚖</span>
+          <span>COUNTERFACTUAL VERIFICATION & TRADEOFF ANALYSIS</span>
         </div>
         <span
           className={`badge ${
@@ -64,25 +65,36 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
         </span>
       </div>
 
-      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Expected vs. Verified Comparison Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {/* Expected Effect */}
           <div
             style={{
-              backgroundColor: 'rgba(59, 130, 246, 0.05)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              borderRadius: '4px',
-              padding: '10px',
+              backgroundColor: 'rgba(30, 58, 138, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '5px',
+              padding: '12px',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
             }}
           >
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '4px' }}>
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#38bdf8',
+                textTransform: 'uppercase',
+                marginBottom: '5px',
+                fontFamily: 'var(--font-heading)',
+                letterSpacing: '0.06em',
+              }}
+            >
               EXPECTED EFFECT (OPTIMIZER)
             </div>
-            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55 }}>
               {recommendation?.expected_effect || 'Expected to reduce forward stockout risk.'}
             </div>
-            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '6px' }}>
+            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '8px', fontFamily: 'var(--font-mono)' }}>
               Source: Multi-Commodity Linear Flow LP
             </div>
           </div>
@@ -92,23 +104,34 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
             style={{
               backgroundColor:
                 status === 'VERIFIED' || status === 'MIXED'
-                  ? 'rgba(16, 185, 129, 0.05)'
-                  : 'rgba(239, 68, 68, 0.05)',
+                  ? 'rgba(16, 185, 129, 0.08)'
+                  : 'rgba(239, 68, 68, 0.08)',
               border:
                 status === 'VERIFIED' || status === 'MIXED'
-                  ? '1px solid rgba(16, 185, 129, 0.25)'
-                  : '1px solid rgba(239, 68, 68, 0.25)',
-              borderRadius: '4px',
-              padding: '10px',
+                  ? '1px solid rgba(16, 185, 129, 0.35)'
+                  : '1px solid rgba(239, 68, 68, 0.35)',
+              borderRadius: '5px',
+              padding: '12px',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
             }}
           >
-            <div style={{ fontSize: '10px', fontWeight: 700, color: status === 'VERIFIED' || status === 'MIXED' ? '#10b981' : '#ef4444', textTransform: 'uppercase', marginBottom: '4px' }}>
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: status === 'VERIFIED' || status === 'MIXED' ? '#10b981' : '#ef4444',
+                textTransform: 'uppercase',
+                marginBottom: '5px',
+                fontFamily: 'var(--font-heading)',
+                letterSpacing: '0.06em',
+              }}
+            >
               VERIFIED EFFECT (SIMULATOR)
             </div>
-            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.5 }}>
+            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55 }}>
               {recommendation?.verified_effect || 'Counterfactual evaluation not run yet.'}
             </div>
-            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '6px' }}>
+            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '8px', fontFamily: 'var(--font-mono)' }}>
               Source: Closed-Loop Synthetic Simulation
             </div>
           </div>
@@ -116,7 +139,17 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
 
         {/* Tradeoffs Grid */}
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#94a3b8',
+              textTransform: 'uppercase',
+              marginBottom: '6px',
+              fontFamily: 'var(--font-heading)',
+              letterSpacing: '0.06em',
+            }}
+          >
             OPERATIONAL TRADEOFF MATRIX
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
@@ -131,17 +164,19 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
                 <div
                   key={t.label}
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'rgba(16, 24, 40, 0.65)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '4px',
-                    padding: '8px 10px',
+                    padding: '8px 12px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}
                 >
-                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>{t.label}</span>
-                  <span className={`badge ${b.cls}`} style={{ fontSize: '9px' }}>
+                  <span style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                    {t.label}
+                  </span>
+                  <span className={`badge ${b.cls}`} style={{ fontSize: '9.5px' }}>
                     {b.icon} {t.val}
                   </span>
                 </div>
@@ -153,14 +188,15 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
         {/* Verification Status Explanation Banner */}
         <div
           style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backgroundColor: 'rgba(11, 18, 30, 0.8)',
             borderLeft: `3px solid ${
               status === 'VERIFIED' ? '#10b981' : status === 'MIXED' ? '#f59e0b' : '#ef4444'
             }`,
-            padding: '8px 12px',
+            borderRadius: '0 4px 4px 0',
+            padding: '10px 14px',
             fontSize: '11px',
             color: '#94a3b8',
-            lineHeight: 1.5,
+            lineHeight: 1.55,
           }}
         >
           <strong style={{ color: '#f8fafc' }}>{status}: </strong>

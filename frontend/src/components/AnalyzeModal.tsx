@@ -72,23 +72,32 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 300,
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}
     >
       <div
         style={{
-          width: '520px',
-          backgroundColor: '#0c1322',
-          border: '1px solid #38bdf8',
+          width: '540px',
+          backgroundColor: 'rgba(11, 18, 32, 0.96)',
+          border: '1px solid rgba(0, 229, 255, 0.45)',
           borderRadius: '8px',
           padding: '24px',
-          boxShadow: 'var(--shadow-lg), 0 0 35px rgba(56, 189, 248, 0.25)',
+          boxShadow: 'var(--shadow-lg), 0 0 40px rgba(0, 229, 255, 0.2)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="pulse-indicator" style={{ backgroundColor: isComplete ? '#10b981' : '#38bdf8' }} />
-            <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
+            <span className="pulse-indicator" style={{ backgroundColor: isComplete ? '#10b981' : '#00e5ff' }} />
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 800,
+                color: '#f8fafc',
+                letterSpacing: '0.06em',
+                fontFamily: 'var(--font-heading)',
+              }}
+            >
               {isComplete ? 'NETWORK ANALYSIS COMPLETE' : 'PRAVAH INTELLIGENCE PIPELINE'}
             </span>
           </div>
@@ -96,14 +105,14 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
             <button
               onClick={onClose}
               className="btn btn-secondary"
-              style={{ padding: '2px 8px', fontSize: '10px' }}
+              style={{ padding: '3px 9px', fontSize: '10px' }}
             >
               ✕ CLOSE
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '22px' }}>
           {stages.map((st, i) => {
             const status = getStageStatus(st.id);
             return (
@@ -113,20 +122,21 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '12px',
-                  padding: '10px 12px',
-                  borderRadius: '4px',
+                  padding: '11px 13px',
+                  borderRadius: '5px',
                   backgroundColor:
                     status === 'ACTIVE'
-                      ? 'rgba(56, 189, 248, 0.08)'
+                      ? 'rgba(0, 229, 255, 0.08)'
                       : status === 'COMPLETED'
                       ? 'rgba(16, 185, 129, 0.06)'
                       : 'rgba(255, 255, 255, 0.02)',
                   border:
                     status === 'ACTIVE'
-                      ? '1px solid #38bdf8'
+                      ? '1px solid rgba(0, 229, 255, 0.5)'
                       : status === 'COMPLETED'
-                      ? '1px solid rgba(16, 185, 129, 0.3)'
-                      : '1px solid var(--border-subtle)',
+                      ? '1px solid rgba(16, 185, 129, 0.35)'
+                      : '1px solid rgba(255, 255, 255, 0.06)',
+                  boxShadow: status === 'ACTIVE' ? '0 0 12px rgba(0, 229, 255, 0.15)' : undefined,
                 }}
               >
                 <div
@@ -144,9 +154,9 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
                       status === 'COMPLETED'
                         ? '#10b981'
                         : status === 'ACTIVE'
-                        ? '#38bdf8'
+                        ? '#00e5ff'
                         : '#1e293b',
-                    color: status === 'PENDING' ? '#64748b' : '#0f172a',
+                    color: status === 'PENDING' ? '#64748b' : '#070b13',
                   }}
                 >
                   {status === 'COMPLETED' ? '✓' : i + 1}
@@ -154,14 +164,16 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
                 <div>
                   <div
                     style={{
-                      fontSize: '11px',
+                      fontSize: '11.5px',
                       fontWeight: 700,
-                      color: status === 'ACTIVE' ? '#38bdf8' : status === 'COMPLETED' ? '#10b981' : '#64748b',
+                      color: status === 'ACTIVE' ? '#00e5ff' : status === 'COMPLETED' ? '#10b981' : '#64748b',
+                      fontFamily: 'var(--font-heading)',
+                      letterSpacing: '0.04em',
                     }}
                   >
                     {st.label}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', lineHeight: 1.4 }}>
                     {st.desc}
                   </div>
                 </div>
@@ -174,7 +186,7 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
           <button
             onClick={onClose}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%', padding: '10px', fontSize: '12px' }}
           >
             VIEW COMMAND CENTER RESULTS ➔
           </button>
