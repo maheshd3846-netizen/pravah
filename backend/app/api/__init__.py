@@ -11,6 +11,7 @@ from backend.app.api.forecast import router as forecast_router
 from backend.app.api.risk import router as risk_router
 from backend.app.api.alerts import router as alerts_router
 from backend.app.optimization.routes import router as optimization_router
+from backend.app.decision.routes import router as decision_router
 
 api_router = APIRouter(prefix="/api")
 
@@ -24,5 +25,6 @@ api_router.include_router(forecast_router)
 api_router.include_router(risk_router)
 api_router.include_router(alerts_router)
 api_router.include_router(optimization_router)
+api_router.include_router(decision_router)
 
 __all__ = ["api_router"]
