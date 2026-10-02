@@ -86,3 +86,48 @@ class OptimizationService:
     def get_result(self, run_id: str) -> Optional[OptimizationResult]:
         """Retrieves a previously computed optimization run from cache."""
         return self._cached_results.get(run_id)
+
+    def evaluate_plan(
+        self,
+        optimization_run_id: str,
+        scenario_id: str = "COMPOUND_DISRUPTION",
+        horizon_hours: int = 72,
+        seed: int = 42,
+    ) -> Any:
+        """Executes counterfactual paired simulation evaluating the given optimization run."""
+        from simulation.simulator import SimulationConfig
+        opt_res = self.get_result(optimization_run_id)
+        if not opt_res:
+            opt_res = self.solve_scenario(scenario_id=scenario_id, horizon_hours=horizon_hours)
+
+        dis_list = []
+        if scenario_id and scenario_id.upper() not in ["DEFAULT", "BASELINE"]:
+            sc_dict = self.scenario_service.get_scenario(scenario_id)
+            if sc_dict and "disruptions" in sc_dict:
+                dis_list = [Disruption.from_dict(d_data) for d_data in sc_dict["disruptions"]]
+
+        base_config = SimulationConfig(
+            seed=seed,
+            horizon_hours=horizon_hours,
+            scenario_name=scenario_id,
+            auto_replenish=True,
+            disruptions=dis_list,
+        )
+
+        eval_result = self.evaluator.evaluate_plan(
+            plan_or_result=opt_res,
+            base_config=base_config,
+            scenario_id=scenario_id,
+            horizon_hours=horizon_hours,
+            seed=seed,
+        )
+        if not hasattr(self, "_cached_evaluations"):
+            self._cached_evaluations = {}
+        self._cached_evaluations[eval_result.evaluation_id] = eval_result
+        return eval_result
+
+    def get_evaluation(self, evaluation_id: str) -> Optional[Any]:
+        """Retrieves a previously computed evaluation result from cache."""
+        if not hasattr(self, "_cached_evaluations"):
+            self._cached_evaluations = {}
+        return self._cached_evaluations.get(evaluation_id)

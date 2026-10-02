@@ -104,3 +104,100 @@ async def get_optimization_run(run_id: str) -> OptimizationSolveResponse:
         infeasibility_reasons=result.infeasibility_reasons,
         metadata=result.metadata,
     )
+
+
+from backend.app.optimization.schemas import (
+    OptimizationEvaluateRequest,
+    OptimizationEvaluateResponse,
+    MetricDeltaSchema,
+)
+
+
+@router.post("/evaluate", response_model=OptimizationEvaluateResponse)
+async def evaluate_plan_counterfactual(
+    request: OptimizationEvaluateRequest,
+) -> OptimizationEvaluateResponse:
+    """Executes closed-loop counterfactual simulation comparing baseline vs optimized outcomes."""
+    try:
+        eval_result = opt_service.evaluate_plan(
+            optimization_run_id=request.optimization_run_id,
+            scenario_id=request.scenario_id,
+            horizon_hours=request.horizon_hours,
+            seed=request.seed,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Counterfactual evaluation failure: {str(e)}")
+
+    deltas_dict = {}
+    for k, d in eval_result.deltas.items():
+        deltas_dict[k] = MetricDeltaSchema(
+            metric_name=d.metric_name,
+            baseline=d.baseline,
+            optimized=d.optimized,
+            absolute_delta=d.absolute_delta,
+            relative_delta_percent=d.relative_delta_percent,
+            direction=d.direction.value,
+            is_better=d.is_better,
+        )
+
+    return OptimizationEvaluateResponse(
+        evaluation_id=eval_result.evaluation_id,
+        optimization_run_id=eval_result.optimization_run_id,
+        scenario_id=eval_result.scenario_id,
+        status=eval_result.status.value,
+        horizon_hours=eval_result.horizon_hours,
+        seed=eval_result.seed,
+        initial_state_hash=eval_result.initial_state_hash,
+        baseline=eval_result.baseline.to_dict(),
+        optimized=eval_result.optimized.to_dict(),
+        deltas=deltas_dict,
+        tradeoffs=eval_result.tradeoffs,
+        critical_nodes=eval_result.critical_nodes,
+        shipment_trace=[t.to_dict() for t in eval_result.shipment_trace],
+        plan_validation={
+            "status": eval_result.plan_validation_status,
+            "violations": eval_result.plan_validation_violations,
+        },
+        created_at=eval_result.created_at,
+    )
+
+
+@router.get("/evaluations/{evaluation_id}", response_model=OptimizationEvaluateResponse)
+async def get_evaluation_record(evaluation_id: str) -> OptimizationEvaluateResponse:
+    """Retrieves an existing closed-loop evaluation record by evaluation ID."""
+    eval_result = opt_service.get_evaluation(evaluation_id)
+    if not eval_result:
+        raise HTTPException(status_code=404, detail=f"Evaluation record '{evaluation_id}' not found.")
+
+    deltas_dict = {}
+    for k, d in eval_result.deltas.items():
+        deltas_dict[k] = MetricDeltaSchema(
+            metric_name=d.metric_name,
+            baseline=d.baseline,
+            optimized=d.optimized,
+            absolute_delta=d.absolute_delta,
+            relative_delta_percent=d.relative_delta_percent,
+            direction=d.direction.value,
+            is_better=d.is_better,
+        )
+
+    return OptimizationEvaluateResponse(
+        evaluation_id=eval_result.evaluation_id,
+        optimization_run_id=eval_result.optimization_run_id,
+        scenario_id=eval_result.scenario_id,
+        status=eval_result.status.value,
+        horizon_hours=eval_result.horizon_hours,
+        seed=eval_result.seed,
+        initial_state_hash=eval_result.initial_state_hash,
+        baseline=eval_result.baseline.to_dict(),
+        optimized=eval_result.optimized.to_dict(),
+        deltas=deltas_dict,
+        tradeoffs=eval_result.tradeoffs,
+        critical_nodes=eval_result.critical_nodes,
+        shipment_trace=[t.to_dict() for t in eval_result.shipment_trace],
+        plan_validation={
+            "status": eval_result.plan_validation_status,
+            "violations": eval_result.plan_validation_violations,
+        },
+        created_at=eval_result.created_at,
+    )

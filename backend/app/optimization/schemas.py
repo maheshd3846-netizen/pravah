@@ -51,3 +51,40 @@ class OptimizationSolveResponse(BaseModel):
     decisions: List[MovementDecisionSchema]
     infeasibility_reasons: List[str]
     metadata: Dict[str, Any]
+
+
+class OptimizationEvaluateRequest(BaseModel):
+    """Payload to trigger counterfactual paired evaluation of an optimization plan."""
+    optimization_run_id: str = Field(..., description="ID of the optimization run to evaluate")
+    scenario_id: str = Field(default="COMPOUND_DISRUPTION", description="Scenario configuration identifier")
+    horizon_hours: int = Field(default=72, ge=1, le=336, description="Evaluation planning horizon in hours")
+    seed: int = Field(default=42, description="Random seed for deterministic paired simulation")
+
+
+class MetricDeltaSchema(BaseModel):
+    metric_name: str
+    baseline: float
+    optimized: float
+    absolute_delta: float
+    relative_delta_percent: float
+    direction: str
+    is_better: bool
+
+
+class OptimizationEvaluateResponse(BaseModel):
+    """Complete, auditable closed-loop comparative evaluation response."""
+    evaluation_id: str
+    optimization_run_id: str
+    scenario_id: str
+    status: str
+    horizon_hours: int
+    seed: int
+    initial_state_hash: str
+    baseline: Dict[str, Any]
+    optimized: Dict[str, Any]
+    deltas: Dict[str, MetricDeltaSchema]
+    tradeoffs: Dict[str, str]
+    critical_nodes: List[Dict[str, Any]]
+    shipment_trace: List[Dict[str, Any]]
+    plan_validation: Dict[str, Any]
+    created_at: str

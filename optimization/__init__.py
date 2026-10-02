@@ -1,7 +1,8 @@
 """Optimization Package for PRAVAH Tactical Logistics Decision Support.
 
 Provides mathematical optimization models, vehicle routing & supply allocation
-solvers (MILP via SciPy HiGHS & Heuristics), constraint validators, and input adapters.
+solvers (MILP via SciPy HiGHS & Heuristics), constraint validators, input adapters,
+and closed-loop counterfactual plan evaluators.
 """
 
 from optimization.types import (
@@ -20,6 +21,15 @@ from optimization.objective import ObjectiveBuilder
 from optimization.heuristic import PriorityHeuristicSolver
 from optimization.solver import SolverAdapter, MilpSolver, LogisticsSolver
 from optimization.adapters import OptimizationInputAdapter
+from optimization.plan_adapter import OptimizationPlanAdapter, PlanValidationResult, ExecutableIntervention
+from optimization.evaluation_metrics import (
+    MetricDirection,
+    EvaluationStatus,
+    MetricDelta,
+    SimulationRunMetrics,
+    ShipmentExecutionTrace,
+    PlanEvaluationResult,
+)
 from optimization.evaluator import PlanEvaluator
 
 __all__ = [
@@ -42,5 +52,14 @@ __all__ = [
     "MilpSolver",
     "LogisticsSolver",
     "OptimizationInputAdapter",
+    "OptimizationPlanAdapter",
+    "PlanValidationResult",
+    "ExecutableIntervention",
+    "MetricDirection",
+    "EvaluationStatus",
+    "MetricDelta",
+    "SimulationRunMetrics",
+    "ShipmentExecutionTrace",
+    "PlanEvaluationResult",
     "PlanEvaluator",
 ]
