@@ -274,6 +274,7 @@ export interface RecommendationListResponse {
   status_counts: Record<string, number>;
   action_counts: Record<string, number>;
   recommendations: RecommendationItem[];
+  rejection_summary?: string | null;
 }
 
 export interface DecisionSummaryResponse {

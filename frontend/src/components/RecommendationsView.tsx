@@ -5,17 +5,25 @@ interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
   onSelectRecommendation: (rec: RecommendationItem) => void;
   selectedRecommendationId?: string | null;
+  rejectionSummary?: string | null;
 }
 
 export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
   recommendations,
   onSelectRecommendation,
   selectedRecommendationId,
+  rejectionSummary,
 }) => {
   const [filterAction, setFilterAction] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [filterItem, setFilterItem] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const totalCandidates = recommendations.length;
+  const verifiedCount = recommendations.filter((r) => r.status === 'VERIFIED').length;
+  const mixedCount = recommendations.filter((r) => r.status === 'MIXED').length;
+  const rejectedCount = recommendations.filter((r) => r.status === 'REJECTED').length;
+  const feasibleCount = verifiedCount + mixedCount;
 
   const filtered = recommendations.filter((r) => {
     if (filterAction !== 'ALL' && r.action_type !== filterAction) return false;
@@ -141,6 +149,64 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
         </div>
 
         <div className="panel-body" style={{ padding: 0 }}>
+          {/* Feasibility Pipeline Status Strip */}
+          <div
+            style={{
+              padding: '8px 12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '11px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: '#94a3b8' }}>PIPELINE STAGES:</span>
+              <span className="font-mono" style={{ color: '#38bdf8', fontWeight: 700 }}>
+                {totalCandidates} Candidates Generated
+              </span>
+              <span style={{ color: '#64748b' }}>→</span>
+              <span style={{ color: '#cbd5e1' }}>Physical Validation & Verification</span>
+              <span style={{ color: '#64748b' }}>→</span>
+              <span className="font-mono" style={{ color: feasibleCount > 0 ? '#10b981' : '#f59e0b', fontWeight: 700 }}>
+                {feasibleCount} Feasible Actions
+              </span>
+              {rejectedCount > 0 && (
+                <span className="font-mono" style={{ color: '#ef4444' }}>
+                  ({rejectedCount} Rejected)
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>
+              Deterministic validation prevents unexecutable vehicle or degraded dispatches
+            </div>
+          </div>
+
+          {/* Rejection Summary Banner */}
+          {rejectionSummary && (
+            <div
+              style={{
+                margin: '10px 12px',
+                padding: '10px 12px',
+                backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderLeft: '4px solid #38bdf8',
+                borderRadius: '4px',
+                fontSize: '11px',
+                lineHeight: 1.5,
+                color: '#cbd5e1',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  🛡 FEASIBILITY & COUNTERFACTUAL VERIFICATION AUDIT
+                </span>
+              </div>
+              <div>{rejectionSummary}</div>
+            </div>
+          )}
+
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', color: '#94a3b8', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -245,6 +311,27 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
                 {selectedRec.reason}
               </div>
             </div>
+
+            {/* Rejection Diagnostics if Rejected */}
+            {selectedRec.status === 'REJECTED' && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  padding: '8px 10px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                }}
+              >
+                <div style={{ fontSize: '10px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 700, marginBottom: '2px' }}>
+                  REJECTION REASON & CONFLICT DETAILS
+                </div>
+                <div style={{ fontSize: '11px', color: '#fca5a5', lineHeight: 1.5 }}>
+                  {selectedRec.conflict_details && selectedRec.conflict_details.length > 0
+                    ? selectedRec.conflict_details.join('; ')
+                    : 'Counterfactual simulation determined this candidate worsens logistics outcomes vs baseline under active disruption.'}
+                </div>
+              </div>
+            )}
 
             {/* Traceability Audit Trail */}
             <div>

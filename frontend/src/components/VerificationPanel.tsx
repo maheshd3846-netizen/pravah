@@ -32,8 +32,10 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
         return 'Counterfactual closed-loop simulation confirms the intervention strictly improves service metrics with acceptable operational costs under identical disruption.';
       case 'MIXED':
         return 'Forward stockout is mitigated and service significantly improves, but transport distance and transit delays increased due to mountain pass detour.';
+      case 'DEGRADED':
+        return 'Counterfactual simulation determined that the candidate intervention worsens logistics outcomes vs baseline under active disruption. PRAVAH safely suppresses recommendations to prevent counter-productive dispatch.';
       case 'REJECTED':
-        return 'Recommendation is rejected due to conflict with vehicle availability, corridor capacity, or simulated outcome degradation.';
+        return 'Recommendation is rejected due to conflict with physical vehicle availability, corridor capacity, or simulated outcome degradation.';
       case 'PROPOSED':
         return 'Mathematical optimization plan is feasible; counterfactual closed-loop evaluation pending verification.';
       default:
@@ -53,7 +55,7 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
               ? 'badge-verified'
               : status === 'MIXED'
               ? 'badge-mixed'
-              : status === 'REJECTED'
+              : status === 'REJECTED' || status === 'DEGRADED'
               ? 'badge-rejected'
               : 'badge-proposed'
           }`}

@@ -37,6 +37,7 @@ export const App: React.FC = () => {
   const [nodeRisks, setNodeRisks] = useState<Record<string, NodeRiskDetail>>({});
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [rejectionSummary, setRejectionSummary] = useState<string | null>(null);
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationItem | null>(null);
   const [evaluation, setEvaluation] = useState<CounterfactualEvaluationResponse | null>(null);
   const [activeForecast, setActiveForecast] = useState<ForecastItemResponse | null>(null);
@@ -87,6 +88,7 @@ export const App: React.FC = () => {
         data_quality_state: 'READY',
       });
       setRecommendations(recsRes.recommendations);
+      setRejectionSummary(recsRes.rejection_summary || null);
 
       if (recsRes.recommendations.length > 0) {
         // Pick primary critical recommendation
@@ -182,6 +184,7 @@ export const App: React.FC = () => {
         evaluation_id: evalRes.evaluation_id,
       });
       setRecommendations(recsRes.recommendations);
+      setRejectionSummary(recsRes.rejection_summary || null);
 
       if (recsRes.recommendations.length > 0) {
         setSelectedRecommendation(recsRes.recommendations[0]);
@@ -222,6 +225,7 @@ export const App: React.FC = () => {
         evaluation_id: evalRes.evaluation_id,
       });
       setRecommendations(recsRes.recommendations);
+      setRejectionSummary(recsRes.rejection_summary || null);
       if (recsRes.recommendations.length > 0) {
         setSelectedRecommendation(recsRes.recommendations[0]);
       }
@@ -243,8 +247,8 @@ export const App: React.FC = () => {
       case 1: // Compound disruption
         setCurrentTab('SIMULATION');
         break;
-      case 2: // Risk escalation
-        setCurrentTab('COMMAND_CENTER');
+      case 2: // Risk escalation & propagation
+        setCurrentTab('RISK');
         break;
       case 3: // Select forward outpost FP-01
         setCurrentTab('COMMAND_CENTER');
@@ -259,12 +263,11 @@ export const App: React.FC = () => {
       case 6: // Optimize
         setCurrentTab('OPTIMIZATION');
         break;
-      case 7: // Inspect Alternate Route
-        setCurrentTab('NETWORK');
-        setSelectedRouteId('ROUTE_R_11');
+      case 7: // Physical fleet feasibility validation
+        setCurrentTab('RECOMMENDATIONS');
         break;
-      case 8: // Counterfactual
-      case 9: // Deltas
+      case 8: // Counterfactual simulation
+      case 9: // Empirical verification
         setCurrentTab('SIMULATION');
         break;
       case 10: // Recommendation
@@ -475,6 +478,7 @@ export const App: React.FC = () => {
           <div style={{ height: '100%', minHeight: '550px' }}>
             <RecommendationsView
               recommendations={recommendations}
+              rejectionSummary={rejectionSummary}
               onSelectRecommendation={(r) => {
                 setSelectedRecommendation(r);
                 setSelectedNodeId(r.destination_node);

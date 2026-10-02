@@ -225,6 +225,26 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               </div>
             </div>
 
+            {/* Degraded Alert Banner if applicable */}
+            {evaluation?.status === 'DEGRADED' && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderLeft: '4px solid #ef4444',
+                  borderRadius: '4px',
+                  marginBottom: '10px',
+                  fontSize: '11px',
+                  lineHeight: 1.5,
+                  color: '#fca5a5',
+                }}
+              >
+                <strong>COUNTERFACTUAL SIMULATION FINDING: </strong>
+                Under active disruption conditions, executing candidate movements worsens logistics outcomes compared to baseline. PRAVAH identifies this degradation and rejects candidates — preventing counter-productive dispatch.
+              </div>
+            )}
+
             <table
               style={{
                 width: '100%',
@@ -252,16 +272,41 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                   <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#ef4444' }}>
                     {base.total_unmet_demand.toFixed(1)} u
                   </td>
-                  <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#10b981' }}>
+                  <td
+                    className="font-mono"
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'right',
+                      color: opt.total_unmet_demand <= base.total_unmet_demand ? '#10b981' : '#ef4444',
+                    }}
+                  >
                     {opt.total_unmet_demand.toFixed(1)} u
                   </td>
-                  <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#10b981', fontWeight: 700 }}>
+                  <td
+                    className="font-mono"
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'right',
+                      color: opt.total_unmet_demand <= base.total_unmet_demand ? '#10b981' : '#ef4444',
+                      fontWeight: 700,
+                    }}
+                  >
                     {deltas?.unmet_demand?.absolute_delta !== undefined
-                      ? `${deltas.unmet_demand.absolute_delta.toFixed(1)} u (${deltas.unmet_demand.relative_delta_percent.toFixed(1)}%)`
+                      ? `${deltas.unmet_demand.absolute_delta > 0 ? '+' : ''}${deltas.unmet_demand.absolute_delta.toFixed(1)} u (${deltas.unmet_demand.relative_delta_percent > 0 ? '+' : ''}${deltas.unmet_demand.relative_delta_percent.toFixed(1)}%)`
                       : '—'}
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span className="badge badge-ready">IMPROVED</span>
+                    {deltas?.unmet_demand?.direction === 'IMPROVED' ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : deltas?.unmet_demand?.direction === 'DEGRADED' ? (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    ) : opt.total_unmet_demand < base.total_unmet_demand ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : opt.total_unmet_demand > base.total_unmet_demand ? (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    ) : (
+                      <span className="badge badge-neutral">UNCHANGED</span>
+                    )}
                   </td>
                 </tr>
 
@@ -274,13 +319,29 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                   <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right' }}>
                     {opt.stockout_duration_hours} hrs ({opt.total_stockout_events} events)
                   </td>
-                  <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#10b981', fontWeight: 700 }}>
+                  <td
+                    className="font-mono"
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'right',
+                      color: opt.total_stockout_events <= base.total_stockout_events ? '#10b981' : '#ef4444',
+                      fontWeight: 700,
+                    }}
+                  >
                     {deltas?.stockout_events?.absolute_delta !== undefined
-                      ? `${deltas.stockout_events.absolute_delta.toFixed(0)} events`
+                      ? `${deltas.stockout_events.absolute_delta > 0 ? '+' : ''}${deltas.stockout_events.absolute_delta.toFixed(0)} events`
                       : '—'}
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span className="badge badge-ready">IMPROVED</span>
+                    {deltas?.stockout_events?.direction === 'IMPROVED' ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : deltas?.stockout_events?.direction === 'DEGRADED' ? (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    ) : opt.total_stockout_events <= base.total_stockout_events ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    )}
                   </td>
                 </tr>
 
@@ -290,16 +351,39 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
                   <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right' }}>
                     {base.fulfillment_rate_percent.toFixed(2)}%
                   </td>
-                  <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#10b981' }}>
+                  <td
+                    className="font-mono"
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'right',
+                      color: opt.fulfillment_rate_percent >= base.fulfillment_rate_percent ? '#10b981' : '#ef4444',
+                    }}
+                  >
                     {opt.fulfillment_rate_percent.toFixed(2)}%
                   </td>
-                  <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', color: '#10b981', fontWeight: 700 }}>
+                  <td
+                    className="font-mono"
+                    style={{
+                      padding: '8px 12px',
+                      textAlign: 'right',
+                      color: opt.fulfillment_rate_percent >= base.fulfillment_rate_percent ? '#10b981' : '#ef4444',
+                      fontWeight: 700,
+                    }}
+                  >
                     {deltas?.fulfillment_rate_percent?.absolute_delta !== undefined
-                      ? `+${deltas.fulfillment_rate_percent.absolute_delta.toFixed(2)}% pts`
+                      ? `${deltas.fulfillment_rate_percent.absolute_delta >= 0 ? '+' : ''}${deltas.fulfillment_rate_percent.absolute_delta.toFixed(2)}% pts`
                       : '—'}
                   </td>
                   <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <span className="badge badge-ready">IMPROVED</span>
+                    {deltas?.fulfillment_rate_percent?.direction === 'IMPROVED' ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : deltas?.fulfillment_rate_percent?.direction === 'DEGRADED' ? (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    ) : opt.fulfillment_rate_percent >= base.fulfillment_rate_percent ? (
+                      <span className="badge badge-ready">IMPROVED</span>
+                    ) : (
+                      <span className="badge badge-critical">DEGRADED</span>
+                    )}
                   </td>
                 </tr>
 
