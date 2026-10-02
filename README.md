@@ -170,6 +170,12 @@ Executes the synthetic world generation, runs baseline normal operations (336 ho
 python scripts/run_demo.py
 ```
 
+### Run the Phase 2 Intelligence Demo
+Executes feature engineering, baseline vs XGBoost quantile models (P50/P80/P95), multi-horizon forecasts (24h, 72h, 168h), inventory projection, Monte Carlo stockout analysis, risk engine, network risk propagation, and early warning alerts:
+```bash
+python scripts/run_intelligence_demo.py
+```
+
 ### Start the FastAPI Server
 Starts the high-performance REST API backend with automatic reload:
 ```bash
@@ -179,7 +185,7 @@ uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 - Alternative API Documentation (ReDoc): [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ### Run Test Suite
-Runs all unit, simulation, and API tests with pytest:
+Runs all 42 unit, simulation, ML, risk, and API tests with pytest:
 ```bash
 python -m pytest -v
 ```
@@ -198,6 +204,14 @@ python -m pytest -v
 | `POST` | `/api/scenarios` | Registers a new custom scenario |
 | `POST` | `/api/simulation/run` | Executes 1-hour discrete-time simulation run |
 | `GET` | `/api/simulation/{run_id}/state` | Inspects state and active shipments of a run |
+| `POST` | `/api/forecast/train` | Trains feature pipeline, baselines, and XGBoost quantile models |
+| `POST` | `/api/forecast/run` | Generates P50/P80/P95 forecasts and Monte Carlo stockout analysis |
+| `GET` | `/api/forecast/{node_id}/{item_id}` | Retrieves current demand forecast and projection |
+| `GET` | `/api/risk/overview` | Whole-network risk overview, critical nodes, and active alert counts |
+| `GET` | `/api/risk/nodes` | Detailed risk components and criticality for all 15 nodes |
+| `GET` | `/api/risk/{node_id}` | Node-specific risk breakdown, propagation sources, and criticality |
+| `POST` | `/api/risk/recalculate` | Forces recalculation of network risk telemetry |
+| `GET` | `/api/alerts` | Queries structured early warning alerts with audit evidence |
 
 ---
 
