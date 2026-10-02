@@ -174,7 +174,7 @@ class FeaturePipeline:
 
         # Filter valid rows (drop rows where lag_168 is NaN due to initial warmup)
         valid_idx = ~data[self.feature_columns].isna().any(axis=1)
-        X = data.loc[valid_idx, self.feature_columns].copy()
+        X = data.loc[valid_idx, self.feature_columns].copy().astype(np.float32)
         y = data.loc[valid_idx, "requested_demand"].astype(np.float32)
 
         return X, y

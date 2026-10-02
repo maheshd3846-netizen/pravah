@@ -198,7 +198,7 @@ class RiskEvaluator:
             + self.weights.transport_weight * transport_risk
             + self.weights.environment_weight * environment_risk
         )
-        overall = float(np.clip(overall, 0.0, 1.0))
+        overall = round(float(np.clip(overall, 0.0, 1.0)), 4)
 
         if overall >= self.thresholds.high_cutoff:
             level = "CRITICAL"

@@ -68,10 +68,11 @@ class InventoryProjectionEngine:
     ) -> float:
         """Computes dynamic safety stock: SafetyStock = z * demand_std * sqrt(lead_time_days)."""
         z = service_factor_z if service_factor_z is not None else self.safety_config.service_factor_z
-        lead_time_days = max(0.5, lead_time_hours / 24.0)
-        statistical_buffer = z * max(1.0, demand_std) * math.sqrt(lead_time_days)
+        lead_time_days = max(0.0, lead_time_hours / 24.0)
+        demand_std_safe = max(0.0, demand_std)
+        statistical_buffer = z * demand_std_safe * math.sqrt(lead_time_days)
 
-        if daily_baseline is not None:
+        if daily_baseline is not None and daily_baseline > 0:
             min_floor = daily_baseline * self.safety_config.minimum_safety_days
             return max(round(statistical_buffer, 2), round(min_floor, 2))
 

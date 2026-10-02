@@ -77,9 +77,17 @@ class TemporalCrossValidator:
             X_train, y_train = pipeline.fit_transform(train_raw)
             model.fit(X_train, y_train)
 
-            # Transform test features
-            X_test = pipeline.transform(test_raw)
-            y_test = test_raw["requested_demand"].to_numpy(dtype=np.float32)
+            # Transform test features with preceding historical lookback context from train_raw
+            # to preserve lag and rolling features at fold boundaries without lookahead leakage.
+            lookback = 168
+            train_sorted = train_raw.sort_values(by=["node_id", "item", "timestamp_hour"])
+            train_tail = train_sorted.groupby(["node_id", "item"]).tail(lookback)
+            combined_eval = pd.concat([train_tail, test_raw], ignore_index=True)
+            X_combined = pipeline.transform(combined_eval)
+
+            test_mask = combined_eval["timestamp_hour"] >= train_end
+            X_test = X_combined.loc[test_mask].copy()
+            y_test = combined_eval.loc[test_mask, "requested_demand"].to_numpy(dtype=np.float32)
 
             forecast = model.predict(X_test)
             metrics = evaluate_quantile_forecast(

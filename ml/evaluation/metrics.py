@@ -13,9 +13,17 @@ def evaluate_forecast(
     y_true: Union[np.ndarray, list],
     y_pred: Union[np.ndarray, list],
 ) -> Dict[str, float]:
-    """Calculates MAE, RMSE, MAPE, and WAPE for point forecasts."""
+    """Calculates MAE, RMSE, MAPE, and WAPE for point forecasts with zero-division safety."""
     y_t = np.asarray(y_true, dtype=np.float64)
     y_p = np.asarray(y_pred, dtype=np.float64)
+
+    if len(y_t) == 0:
+        return {
+            "mae": 0.0,
+            "rmse": 0.0,
+            "wape_percent": 0.0,
+            "mape_percent": 0.0,
+        }
 
     mae = float(np.mean(np.abs(y_t - y_p)))
     rmse = float(np.sqrt(np.mean((y_t - y_p) ** 2)))
@@ -45,19 +53,44 @@ def evaluate_quantile_forecast(
     model_name: str = "xgboost",
     horizon_hours: int = 24,
 ) -> Dict[str, Any]:
-    """Comprehensive evaluation of probabilistic quantile forecasts."""
+    """Comprehensive evaluation of probabilistic quantile forecasts.
+    
+    Calibration vs Interval Distinction:
+    - p50/p80/p95_coverage_percent calculates one-sided upper calibration: P(actual <= Q_tau).
+    - p50_to_p95_interval_coverage_percent calculates two-sided interval coverage: P(Q_50 <= actual <= Q_95).
+    """
     y_t = np.asarray(y_true, dtype=np.float64)
     q50 = np.asarray(p50, dtype=np.float64)
     q80 = np.asarray(p80, dtype=np.float64)
     q95 = np.asarray(p95, dtype=np.float64)
 
+    n = len(y_t)
+    if n == 0:
+        return {
+            "model": model_name,
+            "horizon_hours": horizon_hours,
+            "sample_count": 0,
+            "mae": 0.0,
+            "rmse": 0.0,
+            "wape_percent": 0.0,
+            "mape_percent": 0.0,
+            "p50_coverage_percent": 0.0,
+            "p80_coverage_percent": 0.0,
+            "p95_coverage_percent": 0.0,
+            "p50_to_p95_interval_coverage_percent": 0.0,
+            "mean_interval_width_p80_p50": 0.0,
+            "mean_interval_width_p95_p50": 0.0,
+        }
+
     point_metrics = evaluate_forecast(y_t, q50)
 
-    # Coverage: empirical fraction of actuals that fall below or equal the predicted quantile
-    n = len(y_t)
+    # One-sided quantile calibration: empirical fraction of actuals that fall below or equal predicted quantile
     p50_cov = float(np.sum(y_t <= q50) / max(1, n)) * 100.0
     p80_cov = float(np.sum(y_t <= q80) / max(1, n)) * 100.0
     p95_cov = float(np.sum(y_t <= q95) / max(1, n)) * 100.0
+
+    # Two-sided interval coverage: empirical fraction in [P50, P95]
+    p50_p95_cov = float(np.sum((y_t >= q50) & (y_t <= q95)) / max(1, n)) * 100.0
 
     # Interval widths
     width_80_50 = float(np.mean(np.maximum(0.0, q80 - q50)))
@@ -74,6 +107,7 @@ def evaluate_quantile_forecast(
         "p50_coverage_percent": round(p50_cov, 2),
         "p80_coverage_percent": round(p80_cov, 2),
         "p95_coverage_percent": round(p95_cov, 2),
+        "p50_to_p95_interval_coverage_percent": round(p50_p95_cov, 2),
         "mean_interval_width_p80_p50": round(width_80_50, 2),
         "mean_interval_width_p95_p50": round(width_95_50, 2),
     }
