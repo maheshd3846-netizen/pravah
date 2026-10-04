@@ -1,4 +1,5 @@
 import React from 'react';
+import { tokens } from '../tokens';
 
 interface StatusBarProps {
   systemStatus: string;
@@ -17,43 +18,59 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   return (
     <div className="status-bar" role="region" aria-label="Global System Status">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {/* System Status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-heading)', fontSize: '11px', fontWeight: 600 }}>
+          <span
+            style={{
+              color: tokens.colors.text.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
             SYSTEM STATUS:
           </span>
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '4px',
               fontWeight: 700,
-              color: '#10b981',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              background: 'rgba(16, 185, 129, 0.08)',
+              color: tokens.colors.status.healthy,
+              fontFamily: tokens.typography.fontMono,
+              fontSize: '10.5px',
+              backgroundColor: tokens.colors.status.healthySoft,
               padding: '1px 6px',
-              borderRadius: '2px',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: tokens.radii.badge,
+              border: `1px solid ${tokens.colors.status.healthyBorder}`,
             }}
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: tokens.colors.status.healthy }} />
             {systemStatus || 'READY'}
           </span>
         </div>
 
-        <span style={{ color: 'rgba(255, 255, 255, 0.1)' }}>|</span>
+        <span style={{ color: tokens.colors.border.subtle }}>|</span>
 
         {/* Data Quality */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-heading)', fontSize: '11px', fontWeight: 600 }}>
+          <span
+            style={{
+              color: tokens.colors.text.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
             DATA QUALITY:
           </span>
           <span
             className={`badge ${
               dataQuality === 'READY'
-                ? 'badge-ready'
+                ? 'badge-healthy'
                 : dataQuality === 'DEGRADED'
                 ? 'badge-warning'
                 : 'badge-critical'
@@ -63,43 +80,60 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </span>
         </div>
 
-        <span style={{ color: 'rgba(255, 255, 255, 0.1)' }}>|</span>
+        <span style={{ color: tokens.colors.border.subtle }}>|</span>
 
         {/* Forecast Horizon */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-heading)', fontSize: '11px', fontWeight: 600 }}>
+          <span
+            style={{
+              color: tokens.colors.text.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
             FORECAST HORIZON:
           </span>
           <span
             style={{
               fontWeight: 600,
-              color: '#e2e8f0',
-              fontFamily: 'var(--font-mono)',
-              background: 'rgba(255, 255, 255, 0.04)',
+              color: tokens.colors.text.primary,
+              fontFamily: tokens.typography.fontMono,
+              backgroundColor: tokens.colors.background.secondary,
               padding: '1px 6px',
-              borderRadius: '2px',
+              borderRadius: tokens.radii.badge,
+              border: `1px solid ${tokens.colors.border.subtle}`,
             }}
           >
             {forecastHorizonDays} DAYS
           </span>
         </div>
 
-        <span style={{ color: 'rgba(255, 255, 255, 0.1)' }}>|</span>
+        <span style={{ color: tokens.colors.border.subtle }}>|</span>
 
         {/* Active Scenario */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-heading)', fontSize: '11px', fontWeight: 600 }}>
+          <span
+            style={{
+              color: tokens.colors.text.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              fontSize: '10px',
+              fontWeight: 600,
+            }}
+          >
             ACTIVE SCENARIO:
           </span>
           <span
             style={{
               fontWeight: 700,
-              color: '#38bdf8',
-              fontFamily: 'var(--font-mono)',
-              background: 'rgba(56, 189, 248, 0.08)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
-              padding: '1px 7px',
-              borderRadius: '2px',
+              color: tokens.colors.status.warning,
+              fontFamily: tokens.typography.fontMono,
+              backgroundColor: tokens.colors.status.warningSoft,
+              border: `1px solid ${tokens.colors.status.warningBorder}`,
+              padding: '1px 6px',
+              borderRadius: tokens.radii.badge,
             }}
           >
             {activeScenario || 'COMPOUND_DISRUPTION'}
@@ -108,19 +142,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       {/* Right: Telemetry & Link Status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-          <span style={{ color: '#06b6d4' }}>⚡</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: tokens.colors.text.secondary, fontFamily: tokens.typography.fontMono }}>
+          <span style={{ color: tokens.colors.brand.primary }}>⚡</span>
           <span>SATCOM: ONLINE</span>
-          <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>•</span>
-          <span style={{ color: '#10b981' }}>GEO-REDUNDANT</span>
+          <span style={{ color: tokens.colors.border.default }}>•</span>
+          <span style={{ color: tokens.colors.status.healthy }}>GEO-REDUNDANT</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: 'var(--font-heading)', fontSize: '11px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: tokens.colors.text.muted, fontSize: '10.5px' }}>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '10px' }}>
             LAST TELEMETRY REFRESH:
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
+          <span style={{ fontFamily: tokens.typography.fontMono, color: tokens.colors.text.secondary }}>
             {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'LIVE'}
           </span>
         </div>
@@ -128,3 +162,5 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     </div>
   );
 };
+
+export default StatusBar;

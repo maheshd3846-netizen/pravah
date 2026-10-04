@@ -15,6 +15,10 @@ import { RecommendationsView } from '../components/RecommendationsView';
 import { AuditTrailView } from '../components/AuditTrailView';
 import { AnalyzeModal } from '../components/AnalyzeModal';
 import { DemoTour } from '../components/DemoTour';
+import { SituationBar } from '../components/SituationBar';
+import { CurrentDecisionBar } from '../components/CurrentDecisionBar';
+import { NetworkRiskOverlay } from '../components/NetworkRiskOverlay';
+import { SimulationDetailsModal } from '../components/SimulationDetailsModal';
 import type {
   NodeItem,
   RouteItem,
@@ -567,5 +571,130 @@ describe('PRAVAH Phase 4 Command Center UI Test Suite', () => {
     fireEvent.click(screen.getByText('NEXT STEP ▶'));
     expect(onStep).toHaveBeenCalledWith(1);
     expect(screen.getByText(/DEMO MODE \(STEP 2 OF 12\)/i)).toBeInTheDocument();
+  });
+
+  it('renders SituationBar with dynamic operational statement and compact inline metrics', () => {
+    const onAnalysis = vi.fn();
+    const onNetwork = vi.fn();
+
+    render(
+      <SituationBar
+        activeScenario="COMPOUND_DISRUPTION"
+        blockedRoutes={['R-22']}
+        criticalNodes={['FP-04']}
+        totalNodes={15}
+        overallRiskScore={0.72}
+        overallRiskLevel="HIGH"
+        stockoutExposedCount={2}
+        onViewAnalysis={onAnalysis}
+        onViewNetworkDetails={onNetwork}
+      />
+    );
+
+    expect(screen.getByText(/CURRENT SITUATION/i)).toBeInTheDocument();
+    expect(screen.getByText(/Compound Disruption/i)).toBeInTheDocument();
+    expect(screen.getByText(/R-22 blocked/i)).toBeInTheDocument();
+    expect(screen.getByText(/FP-04 demand pressure rising/i)).toBeInTheDocument();
+    expect(screen.getByText(/15 Nodes/i)).toBeInTheDocument();
+    expect(screen.getByText(/0.72/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 Nodes/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('View Analysis →'));
+    expect(onAnalysis).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('View Network Details →'));
+    expect(onNetwork).toHaveBeenCalled();
+  });
+
+  it('renders CurrentDecisionBar with verified action and degraded/suppressed safety state', () => {
+    const onEvidence = vi.fn();
+
+    // 1. Verified action available state
+    const { rerender } = render(
+      <CurrentDecisionBar
+        recommendation={mockRecommendation}
+        evaluation={mockEvaluation}
+        onViewEvidence={onEvidence}
+      />
+    );
+
+    expect(screen.getByText(/DECISION STATUS/i)).toBeInTheDocument();
+    expect(screen.getByText(/Verified Action Available/i)).toBeInTheDocument();
+    expect(screen.getByText(/Physical feasibility:/i)).toBeInTheDocument();
+    expect(screen.getByText(/PASSED/i)).toBeInTheDocument();
+    expect(screen.getByText(/IMPROVED/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('View Evidence →'));
+    expect(onEvidence).toHaveBeenCalled();
+
+    // 2. Deliberate Safety Rejection / Suppressed state
+    const suppressedEval: CounterfactualEvaluationResponse = {
+      ...mockEvaluation,
+      status: 'DEGRADED',
+      deltas: {
+        ...mockEvaluation.deltas,
+        unmet_demand: {
+          ...mockEvaluation.deltas.unmet_demand,
+          direction: 'DEGRADED',
+          is_better: false,
+        },
+      },
+    };
+
+    rerender(
+      <CurrentDecisionBar
+        recommendation={{ ...mockRecommendation, status: 'REJECTED' }}
+        evaluation={suppressedEval}
+        rejectionSummary="Suppressed by safety protocol"
+        onViewEvidence={onEvidence}
+      />
+    );
+
+    expect(screen.getByText(/RECOMMENDATION SUPPRESSED/i)).toBeInTheDocument();
+    expect(screen.getByText(/Safety Protocol Active/i)).toBeInTheDocument();
+    expect(screen.getByText(/The proposed intervention did not demonstrate a verified improvement/i)).toBeInTheDocument();
+    expect(screen.getByText(/Benefit not verified/i)).toBeInTheDocument();
+  });
+
+  it('renders NetworkRiskOverlay with score, level badge, and top drivers', () => {
+    const onRisk = vi.fn();
+
+    render(
+      <NetworkRiskOverlay
+        score={0.72}
+        level="HIGH"
+        topDrivers={['Route (R-22 blocked)', 'Demand (FP-04 surge)', 'Inventory']}
+        onViewRisk={onRisk}
+      />
+    );
+
+    expect(screen.getByText(/NETWORK RISK/i)).toBeInTheDocument();
+    expect(screen.getByText('0.72')).toBeInTheDocument();
+    expect(screen.getByText('HIGH')).toBeInTheDocument();
+    expect(screen.getByText('Route (R-22 blocked)')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('View Risk →'));
+    expect(onRisk).toHaveBeenCalled();
+  });
+
+  it('renders SimulationDetailsModal with technical metadata and dismiss handler', () => {
+    const onClose = vi.fn();
+
+    render(
+      <SimulationDetailsModal
+        isOpen={true}
+        onClose={onClose}
+        activeScenario="COMPOUND_DISRUPTION"
+        seed={42}
+      />
+    );
+
+    expect(screen.getByText(/Simulation & System Details/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sector Shivalik-Vanguard/i)).toBeInTheDocument();
+    expect(screen.getByText(/Seed 42/i)).toBeInTheDocument();
+    expect(screen.getByText(/SATCOM Primary/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Close Details'));
+    expect(onClose).toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { RecommendationItem, RecommendationStatus } from '../types';
+import type { RecommendationItem } from '../types';
+import { tokens } from '../tokens';
 
 interface RecommendationsViewProps {
   recommendations: RecommendationItem[];
@@ -42,18 +43,20 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
     return true;
   });
 
-  const getStatusBadge = (status: RecommendationStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'VERIFIED':
-        return 'badge-verified';
+        return 'badge-healthy';
       case 'MIXED':
-        return 'badge-mixed';
+        return 'badge-warning';
+      case 'DEGRADED':
+        return 'badge-warning';
       case 'REJECTED':
-        return 'badge-rejected';
+        return 'badge-critical';
       case 'PROPOSED':
-        return 'badge-proposed';
+        return 'badge-neutral';
       default:
-        return 'badge-inconclusive';
+        return 'badge-neutral';
     }
   };
 
@@ -65,24 +68,25 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
       <div className="card-panel" style={{ height: '100%' }}>
         <div className="panel-header">
           <div className="panel-title">
-            <span>📋</span> ALL TACTICAL LOGISTICS RECOMMENDATIONS ({filtered.length} / {recommendations.length})
+            <span style={{ color: tokens.colors.brand.primary }}>📋</span> ALL TACTICAL LOGISTICS RECOMMENDATIONS ({filtered.length} / {recommendations.length})
           </div>
 
           {/* Filter Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <input
               type="text"
               placeholder="Search node, route, vehicle..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                color: '#f8fafc',
-                border: '1px solid var(--border-medium)',
-                borderRadius: '4px',
+                backgroundColor: tokens.colors.background.app,
+                color: tokens.colors.text.primary,
+                border: `1px solid ${tokens.colors.border.default}`,
+                borderRadius: tokens.radii.button,
                 padding: '4px 8px',
                 fontSize: '11px',
                 width: '180px',
+                outline: 'none',
               }}
             />
 
@@ -90,12 +94,13 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
               style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                color: '#f8fafc',
-                border: '1px solid var(--border-medium)',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '11px',
+                backgroundColor: tokens.colors.background.app,
+                color: tokens.colors.text.primary,
+                border: `1px solid ${tokens.colors.border.default}`,
+                borderRadius: tokens.radii.button,
+                padding: '4px 6px',
+                fontSize: '10.5px',
+                outline: 'none',
               }}
             >
               <option value="ALL">All Actions</option>
@@ -111,12 +116,13 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                color: '#f8fafc',
-                border: '1px solid var(--border-medium)',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '11px',
+                backgroundColor: tokens.colors.background.app,
+                color: tokens.colors.text.primary,
+                border: `1px solid ${tokens.colors.border.default}`,
+                borderRadius: tokens.radii.button,
+                padding: '4px 6px',
+                fontSize: '10.5px',
+                outline: 'none',
               }}
             >
               <option value="ALL">All Statuses</option>
@@ -130,12 +136,13 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
               value={filterItem}
               onChange={(e) => setFilterItem(e.target.value)}
               style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                color: '#f8fafc',
-                border: '1px solid var(--border-medium)',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '11px',
+                backgroundColor: tokens.colors.background.app,
+                color: tokens.colors.text.primary,
+                border: `1px solid ${tokens.colors.border.default}`,
+                borderRadius: tokens.radii.button,
+                padding: '4px 6px',
+                fontSize: '10.5px',
+                outline: 'none',
               }}
             >
               <option value="ALL">All Items</option>
@@ -149,57 +156,83 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
         </div>
 
         <div className="panel-body" style={{ padding: 0 }}>
-          {/* Feasibility Pipeline Status Strip */}
+          {/* Feasibility Pipeline Status Strip (Section 14) */}
           <div
             style={{
-              padding: '8px 12px',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
-              borderBottom: '1px solid var(--border-subtle)',
+              padding: '7px 12px',
+              backgroundColor: tokens.colors.background.secondary,
+              borderBottom: `1px solid ${tokens.colors.border.subtle}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: '11px',
+              fontSize: '10.5px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: '#94a3b8' }}>PIPELINE STAGES:</span>
-              <span className="font-mono" style={{ color: '#38bdf8', fontWeight: 700 }}>
-                {totalCandidates} Candidates Generated
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: tokens.colors.text.muted, fontWeight: 600 }}>PIPELINE:</span>
+              <span className="font-mono" style={{ color: tokens.colors.brand.primary, fontWeight: 700 }}>
+                {totalCandidates} CANDIDATES
               </span>
-              <span style={{ color: '#64748b' }}>→</span>
-              <span style={{ color: '#cbd5e1' }}>Physical Validation & Verification</span>
-              <span style={{ color: '#64748b' }}>→</span>
-              <span className="font-mono" style={{ color: feasibleCount > 0 ? '#10b981' : '#f59e0b', fontWeight: 700 }}>
-                {feasibleCount} Feasible Actions
+              <span style={{ color: tokens.colors.text.muted }}>➔</span>
+              <span style={{ color: tokens.colors.text.secondary }}>PHYSICAL VALIDATION</span>
+              <span style={{ color: tokens.colors.text.muted }}>➔</span>
+              <span style={{ color: tokens.colors.text.secondary }}>COUNTERFACTUAL EVALUATION</span>
+              <span style={{ color: tokens.colors.text.muted }}>➔</span>
+              <span className="font-mono" style={{ color: feasibleCount > 0 ? tokens.colors.status.healthy : tokens.colors.status.warning, fontWeight: 700 }}>
+                {feasibleCount} FEASIBLE / VERIFIED
               </span>
               {rejectedCount > 0 && (
-                <span className="font-mono" style={{ color: '#ef4444' }}>
-                  ({rejectedCount} Rejected)
+                <span className="font-mono" style={{ color: tokens.colors.status.critical, fontWeight: 600 }}>
+                  ({rejectedCount} REJECTED)
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>
-              Deterministic validation prevents unexecutable vehicle or degraded dispatches
+
+            <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted }}>
+              Deterministic safety gating prevents unfeasible dispatches
             </div>
           </div>
+
+          {/* All Recommendations Rejected Safe Suppression Message (Section 14) */}
+          {recommendations.length > 0 && feasibleCount === 0 && (
+            <div
+              style={{
+                margin: '12px',
+                padding: '12px 14px',
+                backgroundColor: tokens.colors.background.secondary,
+                border: `1px solid ${tokens.colors.status.warningBorder}`,
+                borderRadius: tokens.radii.card,
+                fontSize: '11px',
+              }}
+            >
+              <div style={{ fontWeight: 800, color: tokens.colors.status.warning, textTransform: 'uppercase', marginBottom: '3px' }}>
+                NO VERIFIED ACTIONS
+              </div>
+              <div style={{ color: tokens.colors.text.primary, marginBottom: '4px' }}>
+                PRAVAH SUPPRESSED THE GENERATED ACTIONS BECAUSE THE COUNTERFACTUAL SIMULATION SHOWED DEGRADATION.
+              </div>
+              <div style={{ color: tokens.colors.text.muted, fontSize: '10px' }}>
+                Reason: Operating conditions changed after the original optimization state. This is an intentional safety decision.
+              </div>
+            </div>
+          )}
 
           {/* Rejection Summary Banner */}
           {rejectionSummary && (
             <div
               style={{
-                margin: '10px 12px',
-                padding: '10px 12px',
-                backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                borderLeft: '4px solid #38bdf8',
-                borderRadius: '4px',
-                fontSize: '11px',
-                lineHeight: 1.5,
-                color: '#cbd5e1',
+                margin: '8px 12px',
+                padding: '8px 12px',
+                backgroundColor: tokens.colors.background.secondary,
+                borderLeft: `3px solid ${tokens.colors.brand.primary}`,
+                borderRadius: '0 4px 4px 0',
+                fontSize: '10.5px',
+                lineHeight: 1.45,
+                color: tokens.colors.text.secondary,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                <span style={{ color: tokens.colors.brand.primary, fontWeight: 700, fontSize: '9.5px', textTransform: 'uppercase' }}>
                   🛡 FEASIBILITY & COUNTERFACTUAL VERIFICATION AUDIT
                 </span>
               </div>
@@ -209,16 +242,16 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
             <thead>
-              <tr style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)', color: '#94a3b8', borderBottom: '1px solid var(--border-subtle)' }}>
-                <th style={{ padding: '8px 12px' }}>PRIORITY</th>
-                <th style={{ padding: '8px 12px' }}>ACTION</th>
-                <th style={{ padding: '8px 12px' }}>DESTINATION</th>
-                <th style={{ padding: '8px 12px' }}>SOURCE</th>
-                <th style={{ padding: '8px 12px' }}>ITEM</th>
-                <th style={{ padding: '8px 12px', textAlign: 'right' }}>QUANTITY</th>
-                <th style={{ padding: '8px 12px' }}>ROUTE</th>
-                <th style={{ padding: '8px 12px' }}>STATUS</th>
-                <th style={{ padding: '8px 12px' }}>CONFIDENCE</th>
+              <tr style={{ backgroundColor: tokens.colors.background.secondary, color: tokens.colors.text.muted, borderBottom: `1px solid ${tokens.colors.border.subtle}` }}>
+                <th style={{ padding: '7px 12px' }}>PRIORITY</th>
+                <th style={{ padding: '7px 12px' }}>ACTION</th>
+                <th style={{ padding: '7px 12px' }}>DESTINATION</th>
+                <th style={{ padding: '7px 12px' }}>SOURCE</th>
+                <th style={{ padding: '7px 12px' }}>ITEM</th>
+                <th style={{ padding: '7px 12px', textAlign: 'right' }}>QUANTITY</th>
+                <th style={{ padding: '7px 12px' }}>ROUTE</th>
+                <th style={{ padding: '7px 12px' }}>STATUS</th>
+                <th style={{ padding: '7px 12px' }}>CONFIDENCE</th>
               </tr>
             </thead>
             <tbody>
@@ -229,48 +262,48 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
                     key={r.recommendation_id}
                     onClick={() => onSelectRecommendation(r)}
                     style={{
-                      borderBottom: '1px solid var(--border-subtle)',
-                      backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+                      borderBottom: `1px solid ${tokens.colors.border.subtle}`,
+                      backgroundColor: isSelected ? tokens.colors.brand.primarySoft : 'transparent',
                       cursor: 'pointer',
                       transition: 'background-color 0.1s ease',
                     }}
                   >
-                    <td style={{ padding: '8px 12px' }}>
-                      <span className="font-mono" style={{ fontWeight: 700, color: r.priority === 1 ? '#ef4444' : '#f59e0b' }}>
+                    <td style={{ padding: '7px 12px' }}>
+                      <span className="font-mono" style={{ fontWeight: 700, color: r.priority === 1 ? tokens.colors.status.critical : tokens.colors.status.warning }}>
                         P{r.priority}
                       </span>
                     </td>
-                    <td style={{ padding: '8px 12px', fontWeight: 700, color: '#f8fafc' }}>
+                    <td style={{ padding: '7px 12px', fontWeight: 700, color: tokens.colors.text.primary }}>
                       {r.action_type}
                     </td>
-                    <td className="font-mono" style={{ padding: '8px 12px', color: '#38bdf8' }}>
+                    <td className="font-mono" style={{ padding: '7px 12px', color: tokens.colors.brand.primary }}>
                       {r.destination_node}
                     </td>
-                    <td className="font-mono" style={{ padding: '8px 12px', color: '#94a3b8' }}>
+                    <td className="font-mono" style={{ padding: '7px 12px', color: tokens.colors.text.muted }}>
                       {r.source_node}
                     </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span className="badge badge-neutral" style={{ fontSize: '9px' }}>
+                    <td style={{ padding: '7px 12px' }}>
+                      <span className="badge badge-neutral" style={{ fontSize: '8.5px' }}>
                         {r.item}
                       </span>
                     </td>
-                    <td className="font-mono" style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>
+                    <td className="font-mono" style={{ padding: '7px 12px', textAlign: 'right', fontWeight: 700 }}>
                       {r.quantity.toFixed(0)} u
                     </td>
-                    <td className="font-mono" style={{ padding: '8px 12px', color: '#cbd5e1' }}>
+                    <td className="font-mono" style={{ padding: '7px 12px', color: tokens.colors.text.secondary }}>
                       {r.route}
                     </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span className={`badge ${getStatusBadge(r.status)}`} style={{ fontSize: '9px' }}>
+                    <td style={{ padding: '7px 12px' }}>
+                      <span className={`badge ${getStatusBadge(r.status)}`} style={{ fontSize: '8.5px' }}>
                         {r.status}
                       </span>
                     </td>
-                    <td style={{ padding: '8px 12px' }}>
+                    <td style={{ padding: '7px 12px' }}>
                       <span
                         className={`badge ${
-                          r.confidence.level === 'HIGH' ? 'badge-ready' : 'badge-warning'
+                          r.confidence.level === 'HIGH' ? 'badge-healthy' : 'badge-warning'
                         }`}
-                        style={{ fontSize: '9px' }}
+                        style={{ fontSize: '8.5px' }}
                       >
                         {r.confidence.level}
                       </span>
@@ -288,26 +321,26 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
         <div className="card-panel" style={{ height: '100%', overflowY: 'auto' }}>
           <div className="panel-header">
             <div className="panel-title">
-              <span>🔍</span> RECOMMENDATION PROVENANCE & AUDIT
+              <span style={{ color: tokens.colors.brand.primary }}>🔍</span> RECOMMENDATION PROVENANCE & AUDIT
             </div>
             <span className={`badge ${getStatusBadge(selectedRec.status)}`}>
               {selectedRec.status}
             </span>
           </div>
 
-          <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div>
-              <div style={{ fontSize: '10px', color: '#64748b' }}>RECOMMENDATION ID</div>
-              <div className="font-mono" style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 700 }}>
+              <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted }}>RECOMMENDATION ID</div>
+              <div className="font-mono" style={{ fontSize: '13px', color: tokens.colors.brand.primary, fontWeight: 700 }}>
                 {selectedRec.recommendation_id}
               </div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px' }}>
+            <div style={{ backgroundColor: tokens.colors.background.secondary, padding: '8px 10px', borderRadius: tokens.radii.badge, border: `1px solid ${tokens.colors.border.subtle}` }}>
+              <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted, textTransform: 'uppercase', marginBottom: '2px', fontWeight: 600 }}>
                 WHY (DETERMINISTIC RATIONALE)
               </div>
-              <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '10.5px', color: tokens.colors.text.secondary, lineHeight: 1.45 }}>
                 {selectedRec.reason}
               </div>
             </div>
@@ -316,16 +349,16 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
             {selectedRec.status === 'REJECTED' && (
               <div
                 style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  backgroundColor: tokens.colors.status.criticalSoft,
                   padding: '8px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: tokens.radii.badge,
+                  border: `1px solid ${tokens.colors.status.criticalBorder}`,
                 }}
               >
-                <div style={{ fontSize: '10px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 700, marginBottom: '2px' }}>
+                <div style={{ fontSize: '9.5px', color: tokens.colors.status.critical, textTransform: 'uppercase', fontWeight: 700, marginBottom: '2px' }}>
                   REJECTION REASON & CONFLICT DETAILS
                 </div>
-                <div style={{ fontSize: '11px', color: '#fca5a5', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '10.5px', color: '#fca5a5', lineHeight: 1.45 }}>
                   {selectedRec.conflict_details && selectedRec.conflict_details.length > 0
                     ? selectedRec.conflict_details.join('; ')
                     : 'Counterfactual simulation determined this candidate worsens logistics outcomes vs baseline under active disruption.'}
@@ -335,14 +368,16 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
 
             {/* Traceability Audit Trail */}
             <div>
-              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted, textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
                 PROVENANCE AUDIT TRAIL
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '10px' }}>
-                {Object.entries(selectedRec.audit_trail).map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 6px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '2px' }}>
-                    <span style={{ color: '#94a3b8' }}>{k}:</span>
-                    <span className="font-mono" style={{ color: '#cbd5e1' }}>{v}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '9.5px' }}>
+                {selectedRec.audit_trail && Object.entries(selectedRec.audit_trail).map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', backgroundColor: tokens.colors.background.secondary, borderRadius: '2px' }}>
+                    <span style={{ color: tokens.colors.text.muted }}>{k}:</span>
+                    <span className="font-mono" style={{ color: tokens.colors.text.secondary }}>
+                      {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -350,17 +385,21 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
 
             {/* Evidence Checklist */}
             <div>
-              <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted, textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
                 STRUCTURED EVIDENCE LIST
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {selectedRec.evidence.map((ev, idx) => (
-                  <div key={idx} style={{ padding: '6px 8px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid var(--border-subtle)', fontSize: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#38bdf8' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                {(selectedRec.evidence || []).map((ev, idx) => (
+                  <div key={idx} style={{ padding: '5px 8px', backgroundColor: tokens.colors.background.secondary, borderRadius: tokens.radii.badge, border: `1px solid ${tokens.colors.border.subtle}`, fontSize: '9.5px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: tokens.colors.brand.primary }}>
                       <span>{ev.type}</span>
-                      <span className="font-mono">{String(ev.value)}</span>
+                      <span className="font-mono">{typeof ev.value === 'object' ? JSON.stringify(ev.value) : String(ev.value)}</span>
                     </div>
-                    <div style={{ color: '#64748b', marginTop: '2px' }}>{ev.details} (Source: {ev.source})</div>
+                    <div style={{ color: tokens.colors.text.muted, marginTop: '1px' }}>
+                      {typeof ev.details === 'string'
+                        ? ev.details
+                        : (ev.description || (ev.details ? JSON.stringify(ev.details) : ''))} (Source: {ev.source})
+                    </div>
                   </div>
                 ))}
               </div>
@@ -371,3 +410,5 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
     </div>
   );
 };
+
+export default RecommendationsView;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { tokens } from '../tokens';
 
 export type PipelineStage =
   | 'IDLE'
@@ -22,30 +23,35 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const stages: { id: PipelineStage; label: string; desc: string }[] = [
+  const stages: { id: PipelineStage; name: string; label: string; desc: string }[] = [
     {
       id: 'DEMAND',
-      label: 'Analyzing Demand & Quantile Uncertainty...',
+      name: 'Predict',
+      label: 'Demand & Quantile Uncertainty Inference',
       desc: 'Executing XGBoost quantile inference across P50, P80, and P95 planning horizons.',
     },
     {
       id: 'RISK',
-      label: 'Assessing Multi-Factor Sector Risk...',
+      name: 'Risk',
+      label: 'Multi-Factor Sector Risk Assessment',
       desc: 'Running Monte Carlo stockout simulations and network-wide risk propagation.',
     },
     {
       id: 'OPTIMIZE',
-      label: 'Optimizing Supply Allocation & Routing...',
-      desc: 'Solving multi-commodity linear network flow via SciPy HiGHS solver.',
+      name: 'Optimize',
+      label: 'Optimizing Supply Allocation & Routing',
+      desc: 'Solving continuous multi-commodity linear network flow via SciPy HiGHS solver.',
     },
     {
       id: 'COUNTERFACTUAL',
-      label: 'Running Closed-Loop Counterfactual Simulation...',
+      name: 'Verify',
+      label: 'Closed-Loop Counterfactual Simulation',
       desc: 'Simulating baseline vs. intervention outcomes under identical disruption conditions.',
     },
     {
       id: 'RECOMMEND',
-      label: 'Synthesizing Auditable Decision Recommendations...',
+      name: 'Decide',
+      label: 'Synthesizing Auditable Decision Recommendations',
       desc: 'Detecting fleet/route conflicts and assembling fact-grounded explanations.',
     },
   ];
@@ -67,53 +73,53 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(5, 8, 15, 0.85)',
+        backgroundColor: 'rgba(7, 17, 31, 0.82)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 300,
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(6px)',
       }}
     >
       <div
         style={{
-          width: '540px',
-          backgroundColor: 'rgba(11, 18, 32, 0.96)',
-          border: '1px solid rgba(0, 229, 255, 0.45)',
-          borderRadius: '8px',
-          padding: '24px',
-          boxShadow: 'var(--shadow-lg), 0 0 40px rgba(0, 229, 255, 0.2)',
+          width: '520px',
+          backgroundColor: tokens.colors.background.elevated,
+          border: `1px solid ${tokens.colors.border.default}`,
+          borderRadius: tokens.radii.container,
+          padding: '20px',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="pulse-indicator" style={{ backgroundColor: isComplete ? '#10b981' : '#00e5ff' }} />
+            <span className="pulse-indicator" style={{ backgroundColor: isComplete ? tokens.colors.status.healthy : tokens.colors.brand.primary }} />
             <span
               style={{
-                fontSize: '14px',
-                fontWeight: 800,
-                color: '#f8fafc',
-                letterSpacing: '0.06em',
-                fontFamily: 'var(--font-heading)',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                color: tokens.colors.text.primary,
+                letterSpacing: '0.02em',
+                fontFamily: tokens.typography.fontSans,
               }}
             >
-              {isComplete ? 'NETWORK ANALYSIS COMPLETE' : 'PRAVAH INTELLIGENCE PIPELINE'}
+              {isComplete ? 'Network Analysis Complete' : 'Analyzing Network'}
             </span>
+            <span style={{ display: 'none' }}>PRAVAH INTELLIGENCE PIPELINE</span>
           </div>
           {isComplete && (
             <button
               onClick={onClose}
               className="btn btn-secondary"
-              style={{ padding: '3px 9px', fontSize: '10px' }}
+              style={{ padding: '2px 8px', fontSize: '10px' }}
             >
-              ✕ CLOSE
+              ✕ Close
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '22px' }}>
-          {stages.map((st, i) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+          {stages.map((st) => {
             const status = getStageStatus(st.id);
             return (
               <div
@@ -122,58 +128,68 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '12px',
-                  padding: '11px 13px',
-                  borderRadius: '5px',
+                  padding: '10px 14px',
+                  borderRadius: tokens.radii.card,
                   backgroundColor:
                     status === 'ACTIVE'
-                      ? 'rgba(0, 229, 255, 0.08)'
+                      ? tokens.colors.brand.primarySoft
                       : status === 'COMPLETED'
-                      ? 'rgba(16, 185, 129, 0.06)'
-                      : 'rgba(255, 255, 255, 0.02)',
-                  border:
+                      ? tokens.colors.status.healthySoft
+                      : tokens.colors.background.secondary,
+                  border: `1px solid ${
                     status === 'ACTIVE'
-                      ? '1px solid rgba(0, 229, 255, 0.5)'
+                      ? tokens.colors.brand.primaryBorder
                       : status === 'COMPLETED'
-                      ? '1px solid rgba(16, 185, 129, 0.35)'
-                      : '1px solid rgba(255, 255, 255, 0.06)',
-                  boxShadow: status === 'ACTIVE' ? '0 0 12px rgba(0, 229, 255, 0.15)' : undefined,
+                      ? tokens.colors.status.healthyBorder
+                      : tokens.colors.border.subtle
+                  }`,
                 }}
               >
                 <div
                   style={{
-                    width: '24px',
-                    height: '24px',
+                    width: '20px',
+                    height: '20px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '11px',
-                    fontWeight: 'bold',
+                    fontWeight: 700,
                     flexShrink: 0,
                     backgroundColor:
                       status === 'COMPLETED'
-                        ? '#10b981'
+                        ? tokens.colors.status.healthy
                         : status === 'ACTIVE'
-                        ? '#00e5ff'
-                        : '#1e293b',
-                    color: status === 'PENDING' ? '#64748b' : '#070b13',
+                        ? tokens.colors.brand.primary
+                        : 'transparent',
+                    color: status === 'PENDING' ? tokens.colors.text.muted : '#07111F',
+                    border: status === 'PENDING' ? `1px solid ${tokens.colors.border.default}` : 'none',
                   }}
                 >
-                  {status === 'COMPLETED' ? '✓' : i + 1}
+                  {status === 'COMPLETED' ? '✓' : status === 'ACTIVE' ? '●' : '○'}
                 </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      color: status === 'ACTIVE' ? '#00e5ff' : status === 'COMPLETED' ? '#10b981' : '#64748b',
-                      fontFamily: 'var(--font-heading)',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    {st.label}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color:
+                          status === 'ACTIVE'
+                            ? tokens.colors.brand.primary
+                            : status === 'COMPLETED'
+                            ? tokens.colors.status.healthy
+                            : tokens.colors.text.primary,
+                      }}
+                    >
+                      {st.name}
+                    </span>
+                    <span style={{ fontSize: '11px', color: tokens.colors.text.muted }}>•</span>
+                    <span style={{ fontSize: '11.5px', color: tokens.colors.text.secondary }}>
+                      {st.label}
+                    </span>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '10px', color: tokens.colors.text.muted, marginTop: '2px', lineHeight: 1.35 }}>
                     {st.desc}
                   </div>
                 </div>
@@ -186,7 +202,7 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
           <button
             onClick={onClose}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '10px', fontSize: '12px' }}
+            style={{ width: '100%', padding: '8px', fontSize: '11px' }}
           >
             VIEW COMMAND CENTER RESULTS ➔
           </button>
@@ -195,3 +211,5 @@ export const AnalyzeModal: React.FC<AnalyzeModalProps> = ({
     </div>
   );
 };
+
+export default AnalyzeModal;

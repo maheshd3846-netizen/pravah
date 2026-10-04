@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RecommendationItem, CounterfactualEvaluationResponse } from '../types';
+import { tokens } from '../tokens';
 
 interface VerificationPanelProps {
   recommendation?: RecommendationItem | null;
@@ -14,11 +15,13 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
 }) => {
   const tradeoffs = recommendation?.tradeoffs || evaluation?.tradeoffs || {};
   const status = recommendation?.status || evaluation?.status || 'PROPOSED';
+  const baseline = evaluation?.baseline;
+  const optimized = evaluation?.optimized;
 
   const getTradeoffBadge = (_key: string, value: string) => {
     const valUpper = (value || '').toUpperCase();
     if (valUpper.includes('IMPROVED') || valUpper.includes('MITIGATED') || valUpper.includes('REDUCED')) {
-      return { cls: 'badge-ready', icon: '↑' };
+      return { cls: 'badge-healthy', icon: '↑' };
     }
     if (valUpper.includes('INCREASED') || valUpper.includes('ELEVATED') || valUpper.includes('DEGRADED')) {
       return { cls: 'badge-warning', icon: '↑' };
@@ -33,7 +36,7 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
       case 'MIXED':
         return 'Forward stockout is mitigated and service significantly improves, but transport distance and transit delays increased due to mountain pass detour.';
       case 'DEGRADED':
-        return 'Counterfactual simulation determined that the candidate intervention worsens logistics outcomes vs baseline under active disruption. PRAVAH safely suppresses recommendations to prevent counter-productive dispatch.';
+        return 'The proposed intervention was evaluated against the disrupted operating state. Expected benefit could not be verified. Recommendation suppressed as a safety decision.';
       case 'REJECTED':
         return 'Recommendation is rejected due to conflict with physical vehicle availability, corridor capacity, or simulated outcome degradation.';
       case 'PROPOSED':
@@ -47,54 +50,129 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
     <div className="card-panel" style={{ height: '100%' }}>
       <div className="panel-header">
         <div className="panel-title">
-          <span style={{ color: '#00e5ff', fontSize: '13px' }}>⚖</span>
+          <span style={{ color: tokens.colors.brand.primary, fontSize: '13px' }}>⚖</span>
           <span>COUNTERFACTUAL VERIFICATION & TRADEOFF ANALYSIS</span>
         </div>
         <span
           className={`badge ${
             status === 'VERIFIED'
-              ? 'badge-verified'
+              ? 'badge-healthy'
               : status === 'MIXED'
-              ? 'badge-mixed'
-              : status === 'REJECTED' || status === 'DEGRADED'
-              ? 'badge-rejected'
-              : 'badge-proposed'
+              ? 'badge-warning'
+              : status === 'DEGRADED'
+              ? 'badge-warning'
+              : status === 'REJECTED'
+              ? 'badge-critical'
+              : 'badge-neutral'
           }`}
         >
           {status}
         </span>
       </div>
 
-      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Side-by-Side Baseline vs Intervention (Section 17) */}
+        {baseline && optimized && (
+          <div
+            style={{
+              backgroundColor: tokens.colors.background.secondary,
+              border: `1px solid ${tokens.colors.border.subtle}`,
+              borderRadius: tokens.radii.card,
+              padding: '10px',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10.5px' }}>
+              {/* Baseline */}
+              <div style={{ backgroundColor: tokens.colors.background.surface, padding: '8px 10px', borderRadius: tokens.radii.badge, border: `1px solid ${tokens.colors.border.subtle}` }}>
+                <div style={{ fontSize: '9.5px', color: tokens.colors.text.muted, fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                  BASELINE (NO INTERVENTION)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Fulfillment:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.text.primary, fontWeight: 700 }}>
+                    {baseline.fulfillment_rate_percent.toFixed(1)}%
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Unmet Demand:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.status.critical }}>
+                    {baseline.total_unmet_demand.toFixed(1)} u
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Distance:</span>
+                  <span className="font-mono">{baseline.total_transport_distance_km.toFixed(0)} km</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Avg Delay:</span>
+                  <span className="font-mono">{baseline.average_delay_hours.toFixed(1)}h</span>
+                </div>
+              </div>
+
+              {/* Intervention */}
+              <div style={{ backgroundColor: tokens.colors.background.surface, padding: '8px 10px', borderRadius: tokens.radii.badge, border: `1px solid ${tokens.colors.brand.primaryBorder}` }}>
+                <div style={{ fontSize: '9.5px', color: tokens.colors.brand.primary, fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                  INTERVENTION (OPTIMIZED DISPATCH)
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Fulfillment:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.status.healthy, fontWeight: 700 }}>
+                    {optimized.fulfillment_rate_percent.toFixed(1)}%
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Unmet Demand:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.status.healthy }}>
+                    {optimized.total_unmet_demand.toFixed(1)} u
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Distance:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.status.warning }}>{optimized.total_transport_distance_km.toFixed(0)} km</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: tokens.colors.text.secondary }}>Avg Delay:</span>
+                  <span className="font-mono" style={{ color: tokens.colors.status.warning }}>{optimized.average_delay_hours.toFixed(1)}h</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '8px', padding: '6px 8px', backgroundColor: tokens.colors.background.elevated, borderRadius: tokens.radii.badge, fontSize: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: tokens.colors.text.muted, fontWeight: 600 }}>VERDICT:</span>
+              <span style={{ color: status === 'VERIFIED' ? tokens.colors.status.healthy : tokens.colors.status.warning, fontWeight: 700, fontFamily: tokens.typography.fontMono }}>
+                {status === 'MIXED' ? 'MIXED — Service improved, but transport distance increased.' : status}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Expected vs. Verified Comparison Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {/* Expected Effect */}
           <div
             style={{
-              backgroundColor: 'rgba(30, 58, 138, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              borderRadius: '5px',
-              padding: '12px',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backgroundColor: tokens.colors.background.secondary,
+              border: `1px solid ${tokens.colors.border.subtle}`,
+              borderRadius: tokens.radii.badge,
+              padding: '10px 12px',
             }}
           >
             <div
               style={{
-                fontSize: '10px',
+                fontSize: '9.5px',
                 fontWeight: 700,
-                color: '#38bdf8',
+                color: tokens.colors.brand.primary,
                 textTransform: 'uppercase',
-                marginBottom: '5px',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '0.06em',
+                marginBottom: '4px',
+                letterSpacing: '0.04em',
               }}
             >
               EXPECTED EFFECT (OPTIMIZER)
             </div>
-            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55 }}>
+            <div style={{ fontSize: '10.5px', color: tokens.colors.text.secondary, lineHeight: 1.5 }}>
               {recommendation?.expected_effect || 'Expected to reduce forward stockout risk.'}
             </div>
-            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '8px', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '9px', color: tokens.colors.text.muted, marginTop: '6px', fontFamily: tokens.typography.fontMono }}>
               Source: Multi-Commodity Linear Flow LP
             </div>
           </div>
@@ -102,57 +180,48 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
           {/* Verified Effect */}
           <div
             style={{
-              backgroundColor:
-                status === 'VERIFIED' || status === 'MIXED'
-                  ? 'rgba(16, 185, 129, 0.08)'
-                  : 'rgba(239, 68, 68, 0.08)',
-              border:
-                status === 'VERIFIED' || status === 'MIXED'
-                  ? '1px solid rgba(16, 185, 129, 0.35)'
-                  : '1px solid rgba(239, 68, 68, 0.35)',
-              borderRadius: '5px',
-              padding: '12px',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backgroundColor: tokens.colors.background.secondary,
+              border: `1px solid ${tokens.colors.border.subtle}`,
+              borderRadius: tokens.radii.badge,
+              padding: '10px 12px',
             }}
           >
             <div
               style={{
-                fontSize: '10px',
+                fontSize: '9.5px',
                 fontWeight: 700,
-                color: status === 'VERIFIED' || status === 'MIXED' ? '#10b981' : '#ef4444',
+                color: status === 'VERIFIED' || status === 'MIXED' ? tokens.colors.status.healthy : tokens.colors.status.warning,
                 textTransform: 'uppercase',
-                marginBottom: '5px',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '0.06em',
+                marginBottom: '4px',
+                letterSpacing: '0.04em',
               }}
             >
               VERIFIED EFFECT (SIMULATOR)
             </div>
-            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55 }}>
+            <div style={{ fontSize: '10.5px', color: tokens.colors.text.secondary, lineHeight: 1.5 }}>
               {recommendation?.verified_effect || 'Counterfactual evaluation not run yet.'}
             </div>
-            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '8px', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: '9px', color: tokens.colors.text.muted, marginTop: '6px', fontFamily: tokens.typography.fontMono }}>
               Source: Closed-Loop Synthetic Simulation
             </div>
           </div>
         </div>
 
-        {/* Tradeoffs Grid */}
+        {/* Operational Tradeoff Matrix */}
         <div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: 700,
-              color: '#94a3b8',
+              color: tokens.colors.text.secondary,
               textTransform: 'uppercase',
-              marginBottom: '6px',
-              fontFamily: 'var(--font-heading)',
-              letterSpacing: '0.06em',
+              marginBottom: '4px',
+              letterSpacing: '0.04em',
             }}
           >
             OPERATIONAL TRADEOFF MATRIX
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
             {[
               { label: 'SERVICE OUTCOME', key: 'SERVICE', val: tradeoffs['SERVICE'] || 'IMPROVED' },
               { label: 'LOGISTICS RISK', key: 'RISK', val: tradeoffs['RISK'] || 'MITIGATED' },
@@ -164,19 +233,19 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
                 <div
                   key={t.label}
                   style={{
-                    backgroundColor: 'rgba(16, 24, 40, 0.65)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '4px',
-                    padding: '8px 12px',
+                    backgroundColor: tokens.colors.background.secondary,
+                    border: `1px solid ${tokens.colors.border.subtle}`,
+                    borderRadius: tokens.radii.badge,
+                    padding: '7px 10px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}
                 >
-                  <span style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: '9.5px', color: tokens.colors.text.secondary }}>
                     {t.label}
                   </span>
-                  <span className={`badge ${b.cls}`} style={{ fontSize: '9.5px' }}>
+                  <span className={`badge ${b.cls}`} style={{ fontSize: '9px' }}>
                     {b.icon} {t.val}
                   </span>
                 </div>
@@ -188,21 +257,27 @@ export const VerificationPanel: React.FC<VerificationPanelProps> = ({
         {/* Verification Status Explanation Banner */}
         <div
           style={{
-            backgroundColor: 'rgba(11, 18, 30, 0.8)',
+            backgroundColor: tokens.colors.background.secondary,
             borderLeft: `3px solid ${
-              status === 'VERIFIED' ? '#10b981' : status === 'MIXED' ? '#f59e0b' : '#ef4444'
+              status === 'VERIFIED'
+                ? tokens.colors.status.healthy
+                : status === 'MIXED' || status === 'DEGRADED'
+                ? tokens.colors.status.warning
+                : tokens.colors.status.critical
             }`,
             borderRadius: '0 4px 4px 0',
-            padding: '10px 14px',
-            fontSize: '11px',
-            color: '#94a3b8',
-            lineHeight: 1.55,
+            padding: '8px 12px',
+            fontSize: '10.5px',
+            color: tokens.colors.text.secondary,
+            lineHeight: 1.5,
           }}
         >
-          <strong style={{ color: '#f8fafc' }}>{status}: </strong>
+          <strong style={{ color: tokens.colors.text.primary }}>{status}: </strong>
           {getStatusExplanation(status)}
         </div>
       </div>
     </div>
   );
 };
+
+export default VerificationPanel;

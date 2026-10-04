@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { tokens } from '../tokens';
 
 interface DemoTourProps {
   onStepChange: (stepIndex: number) => void;
@@ -95,32 +96,30 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
     <div
       style={{
         position: 'fixed',
-        bottom: '24px',
+        bottom: '20px',
         left: '50%',
         transform: 'translateX(-50%)',
         width: '580px',
-        backgroundColor: 'rgba(10, 16, 28, 0.94)',
-        border: '1px solid rgba(0, 229, 255, 0.45)',
-        borderRadius: '8px',
-        padding: '16px 22px',
-        boxShadow: 'var(--shadow-lg), 0 0 30px rgba(0, 229, 255, 0.2)',
+        backgroundColor: tokens.colors.background.elevated,
+        border: `1px solid ${tokens.colors.border.default}`,
+        borderRadius: tokens.radii.container,
+        padding: '16px 20px',
+        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)',
         zIndex: 200,
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backdropFilter: 'blur(8px)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge badge-cyan" style={{ fontSize: '9px', padding: '2px 6px' }}>
+          <span className="badge badge-brand" style={{ fontSize: '8.5px', padding: '1px 5px' }}>
             DEMO MODE (STEP {currentStep + 1} OF {steps.length})
           </span>
           <span
             style={{
-              fontSize: '12px',
+              fontSize: '11.5px',
               fontWeight: 700,
-              color: '#f8fafc',
-              fontFamily: 'var(--font-heading)',
-              letterSpacing: '0.05em',
+              color: tokens.colors.text.primary,
+              letterSpacing: '0.04em',
             }}
           >
             {step.title}
@@ -131,9 +130,9 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
           style={{
             background: 'none',
             border: 'none',
-            color: '#94a3b8',
+            color: tokens.colors.text.muted,
             cursor: 'pointer',
-            fontSize: '14px',
+            fontSize: '13px',
             padding: '2px',
           }}
           title="Exit Demo Tour"
@@ -142,51 +141,69 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
         </button>
       </div>
 
-      <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.55, marginBottom: '14px' }}>
+      <div style={{ fontSize: '11px', color: tokens.colors.text.secondary, lineHeight: 1.5, marginBottom: '10px' }}>
         {step.desc}
+      </div>
+
+      {/* Synthetic Data Disclaimer (Section 25) */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '9px',
+          fontFamily: tokens.typography.fontMono,
+          color: tokens.colors.text.muted,
+          marginBottom: '10px',
+          padding: '3px 6px',
+          backgroundColor: tokens.colors.background.surface,
+          borderRadius: tokens.radii.badge,
+        }}
+      >
+        <span>SCENARIO: SYNTHETIC NORTHERN SECTOR // SEED 42</span>
+        <span style={{ color: tokens.colors.brand.primary }}>SYNTHETIC DATA / FICTIONAL COORDINATES</span>
       </div>
 
       {/* Progress Bar */}
       <div
         style={{
-          height: '3px',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          borderRadius: '2px',
+          height: '2px',
+          backgroundColor: tokens.colors.background.app,
+          borderRadius: '1px',
           overflow: 'hidden',
-          marginBottom: '14px',
+          marginBottom: '12px',
         }}
       >
         <div
           style={{
             height: '100%',
             width: `${((currentStep + 1) / steps.length) * 100}%`,
-            background: 'linear-gradient(90deg, #0284c7 0%, #00e5ff 100%)',
-            boxShadow: '0 0 8px #00e5ff',
-            transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            backgroundColor: tokens.colors.brand.primary,
+            transition: 'width 0.2s ease-out',
           }}
         />
       </div>
 
-      {/* Buttons */}
+      {/* Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button
           onClick={handlePrev}
           disabled={currentStep === 0}
           className="btn btn-secondary"
-          style={{ padding: '5px 12px', fontSize: '10px' }}
+          style={{ padding: '4px 10px', fontSize: '10px' }}
         >
           ◀ PREVIOUS
         </button>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
           <button
             onClick={() => onStepChange(currentStep)}
             className="btn btn-secondary"
             style={{
-              padding: '5px 12px',
+              padding: '4px 10px',
               fontSize: '10px',
-              color: '#00e5ff',
-              borderColor: 'rgba(0, 229, 255, 0.4)',
+              color: tokens.colors.brand.primary,
+              borderColor: tokens.colors.brand.primaryBorder,
             }}
           >
             {step.action}
@@ -194,7 +211,7 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
           <button
             onClick={handleNext}
             className="btn btn-primary"
-            style={{ padding: '5px 14px', fontSize: '10px' }}
+            style={{ padding: '4px 12px', fontSize: '10px' }}
           >
             {currentStep === steps.length - 1 ? 'COMPLETE' : 'NEXT STEP ▶'}
           </button>
@@ -203,3 +220,5 @@ export const DemoTour: React.FC<DemoTourProps> = ({ onStepChange, onClose }) => 
     </div>
   );
 };
+
+export default DemoTour;

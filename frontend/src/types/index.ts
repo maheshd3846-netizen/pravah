@@ -212,7 +212,8 @@ export interface DecisionEvidenceItem {
   type: string;
   value: any;
   source: string;
-  details: string;
+  description?: string;
+  details?: any;
 }
 
 export interface RouteAlternative {

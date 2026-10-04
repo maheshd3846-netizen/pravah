@@ -13,19 +13,21 @@ import type {
 import * as api from './api';
 import { Header } from './components/Header';
 import type { NavTab } from './components/Header';
-import { StatusBar } from './components/StatusBar';
-import { KpiStrip } from './components/KpiStrip';
+import { SituationBar } from './components/SituationBar';
+import { NetworkRiskOverlay } from './components/NetworkRiskOverlay';
+import { CurrentDecisionBar } from './components/CurrentDecisionBar';
 import { DigitalTwinMap } from './components/DigitalTwinMap';
 import { RiskPanel } from './components/RiskPanel';
 import { ForecastPanel } from './components/ForecastPanel';
 import { DecisionCenter } from './components/DecisionCenter';
-import { VerificationPanel } from './components/VerificationPanel';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { RecommendationsView } from './components/RecommendationsView';
 import { AuditTrailView } from './components/AuditTrailView';
 import { DemoTour } from './components/DemoTour';
 import { AnalyzeModal } from './components/AnalyzeModal';
 import type { PipelineStage } from './components/AnalyzeModal';
+import { EvidenceDrawer } from './components/EvidenceDrawer';
+import { KpiStrip } from './components/KpiStrip';
 
 export const App: React.FC = () => {
   // Navigation
@@ -42,7 +44,7 @@ export const App: React.FC = () => {
   const [evaluation, setEvaluation] = useState<CounterfactualEvaluationResponse | null>(null);
   const [activeForecast, setActiveForecast] = useState<ForecastItemResponse | null>(null);
 
-  // Selection States
+  // Selection States - Default null so NO inspection drawer is shown by default!
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<string>('FUEL');
@@ -57,6 +59,7 @@ export const App: React.FC = () => {
   const [analyzeStage, setAnalyzeStage] = useState<PipelineStage>('IDLE');
   const [showAnalyzeModal, setShowAnalyzeModal] = useState<boolean>(false);
   const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [isEvidenceDrawerOpen, setIsEvidenceDrawerOpen] = useState<boolean>(false);
 
   // Fetch initial telemetry
   const loadData = useCallback(async () => {
@@ -91,13 +94,15 @@ export const App: React.FC = () => {
       setRejectionSummary(recsRes.rejection_summary || null);
 
       if (recsRes.recommendations.length > 0) {
-        // Pick primary critical recommendation
+        // Pick primary critical recommendation for decision status bar
         const target =
           recsRes.recommendations.find(
             (r) => r.status === 'VERIFIED' || r.status === 'MIXED'
           ) || recsRes.recommendations[0];
         setSelectedRecommendation(target);
-        setSelectedNodeId(target.destination_node);
+
+        // NOTE: We deliberately do NOT set selectedNodeId here so the Digital Twin
+        // starts clean without any default node inspection drawer open!
 
         // Load evaluation if present
         const evalId = target.audit_trail?.['evaluation_id'];
@@ -128,11 +133,11 @@ export const App: React.FC = () => {
 
   // Load forecast whenever selected node or commodity changes
   useEffect(() => {
-    if (!selectedNodeId) return;
+    const targetNode = selectedNodeId || 'NODE_FP_01';
     const fetchForecast = async () => {
       try {
         const fc = await api.runForecast({
-          node_id: selectedNodeId,
+          node_id: targetNode,
           item_id: selectedItem,
           horizon_hours: 72,
         });
@@ -149,24 +154,24 @@ export const App: React.FC = () => {
     setIsAnalyzing(true);
     setShowAnalyzeModal(true);
     try {
-      // Step 1: Demand & Quantile Inference
+      // Step 1: Demand & Quantile Inference (Predict)
       setAnalyzeStage('DEMAND');
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 550));
 
-      // Step 2: Multi-Factor Risk Assessment
+      // Step 2: Multi-Factor Risk Assessment (Risk)
       setAnalyzeStage('RISK');
       await api.recalculateRisk();
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 550));
 
-      // Step 3: Mathematical Optimization
+      // Step 3: Mathematical Optimization (Optimize)
       setAnalyzeStage('OPTIMIZE');
       const optRes = await api.solveOptimization({
         scenario_id: 'COMPOUND_DISRUPTION',
         demand_policy: 'P80',
       });
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 550));
 
-      // Step 4: Closed-Loop Counterfactual Simulation
+      // Step 4: Closed-Loop Counterfactual Simulation (Verify)
       setAnalyzeStage('COUNTERFACTUAL');
       const evalRes = await api.evaluatePlan({
         optimization_run_id: optRes.run_id,
@@ -174,9 +179,9 @@ export const App: React.FC = () => {
         horizon_hours: 72,
       });
       setEvaluation(evalRes);
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 550));
 
-      // Step 5: Decision Recommendation Assembly
+      // Step 5: Decision Recommendation Assembly (Decide)
       setAnalyzeStage('RECOMMEND');
       const recsRes = await api.generateRecommendations({
         scenario_id: 'COMPOUND_DISRUPTION',
@@ -187,8 +192,11 @@ export const App: React.FC = () => {
       setRejectionSummary(recsRes.rejection_summary || null);
 
       if (recsRes.recommendations.length > 0) {
-        setSelectedRecommendation(recsRes.recommendations[0]);
-        setSelectedNodeId(recsRes.recommendations[0].destination_node);
+        const target =
+          recsRes.recommendations.find(
+            (r) => r.status === 'VERIFIED' || r.status === 'MIXED'
+          ) || recsRes.recommendations[0];
+        setSelectedRecommendation(target);
       }
 
       setAnalyzeStage('COMPLETE');
@@ -227,7 +235,11 @@ export const App: React.FC = () => {
       setRecommendations(recsRes.recommendations);
       setRejectionSummary(recsRes.rejection_summary || null);
       if (recsRes.recommendations.length > 0) {
-        setSelectedRecommendation(recsRes.recommendations[0]);
+        const target =
+          recsRes.recommendations.find(
+            (r) => r.status === 'VERIFIED' || r.status === 'MIXED'
+          ) || recsRes.recommendations[0];
+        setSelectedRecommendation(target);
       }
     } catch (err: any) {
       alert(`Simulation failed: ${err.message}`);
@@ -236,7 +248,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Demo Tour Handler
+  // Demo Tour Handler - smooth guided transitions
   const handleDemoStepChange = (stepIdx: number) => {
     switch (stepIdx) {
       case 0: // Normal grid
@@ -247,33 +259,33 @@ export const App: React.FC = () => {
       case 1: // Compound disruption
         setCurrentTab('SIMULATION');
         break;
-      case 2: // Risk escalation & propagation
+      case 2: // Risk intelligence
         setCurrentTab('RISK');
         break;
-      case 3: // Select forward outpost FP-01
+      case 3: // Drill into forward post
         setCurrentTab('COMMAND_CENTER');
         setSelectedNodeId('NODE_FP_01');
         setSelectedItem('FUEL');
         break;
-      case 4: // Forecast
-      case 5: // Stockout Outlook
+      case 4: // Forecast quantiles
+      case 5: // Stockout outlook
         setCurrentTab('FORECAST');
         setSelectedNodeId('NODE_FP_01');
         break;
-      case 6: // Optimize
+      case 6: // Continuous LP optimization
         setCurrentTab('OPTIMIZATION');
         break;
-      case 7: // Physical fleet feasibility validation
+      case 7: // Fleet validation
         setCurrentTab('RECOMMENDATIONS');
         break;
       case 8: // Counterfactual simulation
       case 9: // Empirical verification
         setCurrentTab('SIMULATION');
         break;
-      case 10: // Recommendation
+      case 10: // Decision recommendations
         setCurrentTab('RECOMMENDATIONS');
         break;
-      case 11: // Explanation & Lineage
+      case 11: // Audit lineage & provenance
         setCurrentTab('AUDIT');
         break;
       default:
@@ -285,9 +297,39 @@ export const App: React.FC = () => {
     (n) => n.id === selectedNodeId || n.code === selectedNodeId
   );
 
+  // Dynamic status parameters
+  const blockedRouteCodes = (network?.routes || [])
+    .filter((r) => r.status === 'BLOCKED')
+    .map((r) => r.route_code);
+
+  const degradedRouteCodes = (network?.routes || [])
+    .filter((r) => r.status === 'DEGRADED')
+    .map((r) => r.route_code);
+
+  const criticalNodeCodes = Object.values(nodeRisks)
+    .filter((nr) => nr.level === 'CRITICAL' || nr.level === 'HIGH')
+    .map((nr) => nr.node_code || nr.node_id);
+
+  const stockoutExposedNodesCount =
+    riskOverview?.high_risk_nodes_count ??
+    (criticalNodeCodes.length > 0 ? criticalNodeCodes.length : 2);
+
+  const overallRiskScore = riskOverview?.nodes?.length
+    ? Math.max(...riskOverview.nodes.map((n) => n.overall_risk))
+    : 0.72;
+
+  const overallRiskLevel =
+    overallRiskScore >= 0.8
+      ? 'CRITICAL'
+      : overallRiskScore >= 0.6
+      ? 'HIGH'
+      : overallRiskScore >= 0.35
+      ? 'MODERATE'
+      : 'NOMINAL';
+
   return (
     <div className="app-container">
-      {/* 1. Header with Navigation & Live Indicators */}
+      {/* 1. Header: Simplified Aggressively (56px) */}
       <Header
         currentTab={currentTab}
         onTabChange={setCurrentTab}
@@ -295,93 +337,173 @@ export const App: React.FC = () => {
         isAnalyzing={isAnalyzing}
         demoMode={demoMode}
         onToggleDemoMode={() => setDemoMode(!demoMode)}
-      />
-
-      {/* 2. Global Status Bar */}
-      <StatusBar
-        systemStatus="READY"
-        dataQuality="READY"
-        forecastHorizonDays={14}
-        activeScenario="COMPOUND_DISRUPTION"
+        activeScenario="Compound Disruption"
+        horizon="72h"
         lastUpdated={lastUpdated}
       />
 
-      {/* 3. High-Value KPI Strip */}
-      <KpiStrip
-        totalNodes={network?.total_nodes ?? 15}
-        totalRoutes={network?.total_routes ?? 28}
-        totalVehicles={network?.total_vehicles ?? 12}
-        highRiskNodesCount={riskOverview?.high_risk_nodes_count ?? 3}
-        activeRecommendationsCount={recommendations.length}
-        isLoading={isLoading}
-      />
-
-      {/* Error Alert Banner */}
-      {errorMessage && (
-        <div
-          style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid #ef4444',
-            padding: '8px 16px',
-            margin: '8px 16px 0 16px',
-            borderRadius: '4px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '11px',
-            color: '#fca5a5',
-          }}
-        >
-          <span>⚠ {errorMessage}</span>
-          <button
-            onClick={loadData}
-            className="btn btn-secondary"
-            style={{ padding: '2px 8px', fontSize: '10px' }}
+      {/* 2. Central Operational Workspace */}
+      <div className="app-workspace">
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid #ef4444',
+              padding: '8px 16px',
+              margin: '8px 16px 0 16px',
+              borderRadius: '4px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '11px',
+              color: '#fca5a5',
+            }}
           >
-            RETRY CONNECTION
-          </button>
-        </div>
-      )}
+            <span>⚠ {errorMessage}</span>
+            <button
+              onClick={loadData}
+              className="btn btn-secondary"
+              style={{ padding: '2px 8px', fontSize: '10px' }}
+            >
+              RETRY CONNECTION
+            </button>
+          </div>
+        )}
 
-      {/* 4. Main Body Views */}
-      <main className="main-content" role="main">
-        {currentTab === 'COMMAND_CENTER' && (
-          <>
-            {/* Top Zone: Digital Twin (dominant) & Critical Risks */}
-            <div className="cc-grid-middle">
-              <DigitalTwinMap
-                nodes={network?.nodes || []}
-                routes={network?.routes || []}
-                vehicles={network?.vehicles || []}
-                nodeRisks={nodeRisks}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={(node: NodeItem) => {
-                  setSelectedNodeId(node.id);
-                  setSelectedRouteId(null);
-                }}
-                selectedRouteId={selectedRouteId}
-                onSelectRoute={(route: RouteItem) => {
-                  setSelectedRouteId(route.id);
-                  setSelectedNodeId(null);
-                }}
-                onViewIntelligence={(node: NodeItem) => {
-                  setSelectedNodeId(node.id);
-                  setCurrentTab('FORECAST');
-                }}
-                highlightedRouteId={selectedRecommendation?.route}
+        {/* Main Body Views */}
+        <main
+          className={`main-content ${currentTab === 'COMMAND_CENTER' ? 'flush-view' : ''}`}
+          role="main"
+        >
+          {/* =========================================================================
+              COMMAND CENTER: SPATIAL DECISION WORKSPACE
+              SITUATION -> DIGITAL TWIN (HERO) -> RISK OVERLAY -> CURRENT DECISION
+              ========================================================================= */}
+          {currentTab === 'COMMAND_CENTER' && (
+            <div
+              className="cc-workspace-container"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                overflow: 'hidden',
+              }}
+            >
+              {/* 1. Current Situation Strip with Inline Metrics */}
+              <SituationBar
+                activeScenario="COMPOUND_DISRUPTION"
+                blockedRoutes={blockedRouteCodes}
+                degradedRoutes={degradedRouteCodes}
+                criticalNodes={criticalNodeCodes}
+                totalNodes={network?.total_nodes ?? 15}
+                overallRiskScore={overallRiskScore}
+                overallRiskLevel={overallRiskLevel}
+                stockoutExposedCount={stockoutExposedNodesCount}
+                onViewAnalysis={handleAnalyzeNetwork}
+                onViewNetworkDetails={() => setCurrentTab('NETWORK')}
               />
 
-              <RiskPanel
-                alerts={alerts}
-                nodeRisks={nodeRisks}
-                selectedNodeId={selectedNodeId}
-                onSelectNode={(nodeId: string) => setSelectedNodeId(nodeId)}
-                isLoading={isLoading}
+              {/* 2. Hero Digital Twin Workspace (~70-75% Dominant Spatial Surface) */}
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: '440px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <DigitalTwinMap
+                  nodes={network?.nodes || []}
+                  routes={network?.routes || []}
+                  vehicles={network?.vehicles || []}
+                  nodeRisks={nodeRisks}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={(node: NodeItem) => {
+                    setSelectedNodeId(node.id || node.code);
+                    setSelectedRouteId(null);
+                  }}
+                  selectedRouteId={selectedRouteId}
+                  onSelectRoute={(route: RouteItem) => {
+                    setSelectedRouteId(route.id);
+                    setSelectedNodeId(null);
+                  }}
+                  onViewIntelligence={(node: NodeItem) => {
+                    setSelectedNodeId(node.id || node.code);
+                    setCurrentTab('FORECAST');
+                  }}
+                  onViewRisk={(node?: NodeItem) => {
+                    if (node) setSelectedNodeId(node.id || node.code);
+                    setCurrentTab('RISK');
+                  }}
+                  highlightedRouteId={selectedRecommendation?.route}
+                >
+                  {/* Floating Network Risk Summary Overlay on the map */}
+                  <NetworkRiskOverlay
+                    score={overallRiskScore}
+                    level={overallRiskLevel}
+                    topDrivers={[
+                      blockedRouteCodes.length > 0 ? `Route (${blockedRouteCodes[0]} blocked)` : 'Corridor degradation',
+                      criticalNodeCodes.length > 0 ? `Demand (${criticalNodeCodes[0]} surge)` : 'Demand pressure',
+                      'Inventory (forward safety stock)',
+                    ]}
+                    onViewRisk={() => setCurrentTab('RISK')}
+                  />
+                </DigitalTwinMap>
+              </div>
+
+              {/* 3. Current Decision State at Bottom of Command Center */}
+              <CurrentDecisionBar
+                recommendation={selectedRecommendation}
+                evaluation={evaluation}
+                rejectionSummary={rejectionSummary}
+                candidateCount={recommendations.length > 0 ? recommendations.length : 55}
+                onViewEvidence={() => setIsEvidenceDrawerOpen(true)}
               />
             </div>
+          )}
 
-            {/* Middle Zone: Prediction & Inventory Outlook */}
-            <div style={{ minHeight: '260px' }}>
+          {/* =========================================================================
+              NETWORK TOPOLOGY & KPI VIEW
+              ========================================================================= */}
+          {currentTab === 'NETWORK' && (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
+              <KpiStrip
+                totalNodes={network?.total_nodes ?? 15}
+                totalRoutes={network?.total_routes ?? 28}
+                totalVehicles={network?.total_vehicles ?? 12}
+                highRiskNodesCount={riskOverview?.high_risk_nodes_count ?? 3}
+                activeRecommendationsCount={recommendations.length}
+                isLoading={isLoading}
+              />
+              <div style={{ flex: 1, minHeight: '520px' }}>
+                <DigitalTwinMap
+                  nodes={network?.nodes || []}
+                  routes={network?.routes || []}
+                  vehicles={network?.vehicles || []}
+                  nodeRisks={nodeRisks}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={(node: NodeItem) => setSelectedNodeId(node.id)}
+                  selectedRouteId={selectedRouteId}
+                  onSelectRoute={(route: RouteItem) => setSelectedRouteId(route.id)}
+                  onViewIntelligence={(node: NodeItem) => {
+                    setSelectedNodeId(node.id);
+                    setCurrentTab('FORECAST');
+                  }}
+                  onViewRisk={(node?: NodeItem) => {
+                    if (node) setSelectedNodeId(node.id);
+                    setCurrentTab('RISK');
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
+              FORECAST INTELLIGENCE VIEW
+              ========================================================================= */}
+          {currentTab === 'FORECAST' && (
+            <div style={{ height: '100%', minHeight: '520px' }}>
               <ForecastPanel
                 nodeCode={selectedNodeObj?.code || 'FP-01'}
                 itemId={selectedItem}
@@ -392,110 +514,77 @@ export const App: React.FC = () => {
                 isLoading={isLoading}
               />
             </div>
+          )}
 
-            {/* Bottom Zone: Decision Center & Counterfactual Verification */}
-            <div className="cc-grid-bottom">
-              <DecisionCenter
-                recommendation={selectedRecommendation}
-                onEvidenceClick={(ev) => {
-                  if (ev.type.includes('ROUTE')) setCurrentTab('NETWORK');
-                  if (ev.type.includes('STOCKOUT') || ev.type.includes('TIME_TO_ZERO'))
-                    setCurrentTab('FORECAST');
-                }}
-                isLoading={isLoading}
-              />
-
-              <VerificationPanel
-                recommendation={selectedRecommendation}
-                evaluation={evaluation}
+          {/* =========================================================================
+              RISK INTELLIGENCE VIEW
+              ========================================================================= */}
+          {currentTab === 'RISK' && (
+            <div style={{ height: '100%', minHeight: '520px' }}>
+              <RiskPanel
+                alerts={alerts}
+                nodeRisks={nodeRisks}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={(nodeId: string) => setSelectedNodeId(nodeId)}
                 isLoading={isLoading}
               />
             </div>
-          </>
-        )}
+          )}
 
-        {currentTab === 'NETWORK' && (
-          <div style={{ height: '100%', minHeight: '600px' }}>
-            <DigitalTwinMap
-              nodes={network?.nodes || []}
-              routes={network?.routes || []}
-              vehicles={network?.vehicles || []}
-              nodeRisks={nodeRisks}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={(node: NodeItem) => setSelectedNodeId(node.id)}
-              selectedRouteId={selectedRouteId}
-              onSelectRoute={(route: RouteItem) => setSelectedRouteId(route.id)}
-            />
-          </div>
-        )}
+          {/* =========================================================================
+              OPTIMIZATION & SOLVER VIEW
+              ========================================================================= */}
+          {currentTab === 'OPTIMIZATION' && (
+            <div style={{ height: '100%', minHeight: '520px' }}>
+              <DecisionCenter
+                recommendation={selectedRecommendation}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
 
-        {currentTab === 'FORECAST' && (
-          <div style={{ height: '100%', minHeight: '500px' }}>
-            <ForecastPanel
-              nodeCode={selectedNodeObj?.code || 'FP-01'}
-              itemId={selectedItem}
-              forecastData={activeForecast}
-              currentInventory={
-                selectedNodeObj?.initial_inventory?.[selectedItem] || 1500
-              }
-              isLoading={isLoading}
-            />
-          </div>
-        )}
+          {/* =========================================================================
+              COUNTERFACTUAL SIMULATION & WHAT-IF COMPARISON
+              ========================================================================= */}
+          {currentTab === 'SIMULATION' && (
+            <div style={{ height: '100%', minHeight: '520px' }}>
+              <ScenarioSimulator
+                evaluation={evaluation}
+                onRunScenario={handleRunScenario}
+                isRunning={isLoading}
+              />
+            </div>
+          )}
 
-        {currentTab === 'RISK' && (
-          <div style={{ height: '100%', minHeight: '500px' }}>
-            <RiskPanel
-              alerts={alerts}
-              nodeRisks={nodeRisks}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={(nodeId: string) => setSelectedNodeId(nodeId)}
-              isLoading={isLoading}
-            />
-          </div>
-        )}
+          {/* =========================================================================
+              RECOMMENDATIONS & ACTION DISPATCH VIEW
+              ========================================================================= */}
+          {currentTab === 'RECOMMENDATIONS' && (
+            <div style={{ height: '100%', minHeight: '550px' }}>
+              <RecommendationsView
+                recommendations={recommendations}
+                rejectionSummary={rejectionSummary}
+                onSelectRecommendation={(r) => {
+                  setSelectedRecommendation(r);
+                  setSelectedNodeId(r.destination_node);
+                }}
+                selectedRecommendationId={selectedRecommendation?.recommendation_id}
+              />
+            </div>
+          )}
 
-        {currentTab === 'OPTIMIZATION' && (
-          <div style={{ height: '100%', minHeight: '500px' }}>
-            <DecisionCenter
-              recommendation={selectedRecommendation}
-              isLoading={isLoading}
-            />
-          </div>
-        )}
+          {/* =========================================================================
+              AUDIT TRAIL & FULL CAUSAL LINEAGE VIEW
+              ========================================================================= */}
+          {currentTab === 'AUDIT' && (
+            <div style={{ height: '100%', minHeight: '550px' }}>
+              <AuditTrailView recommendation={selectedRecommendation} />
+            </div>
+          )}
+        </main>
+      </div>
 
-        {currentTab === 'SIMULATION' && (
-          <div style={{ height: '100%', minHeight: '500px' }}>
-            <ScenarioSimulator
-              evaluation={evaluation}
-              onRunScenario={handleRunScenario}
-              isRunning={isLoading}
-            />
-          </div>
-        )}
-
-        {currentTab === 'RECOMMENDATIONS' && (
-          <div style={{ height: '100%', minHeight: '550px' }}>
-            <RecommendationsView
-              recommendations={recommendations}
-              rejectionSummary={rejectionSummary}
-              onSelectRecommendation={(r) => {
-                setSelectedRecommendation(r);
-                setSelectedNodeId(r.destination_node);
-              }}
-              selectedRecommendationId={selectedRecommendation?.recommendation_id}
-            />
-          </div>
-        )}
-
-        {currentTab === 'AUDIT' && (
-          <div style={{ height: '100%', minHeight: '550px' }}>
-            <AuditTrailView recommendation={selectedRecommendation} />
-          </div>
-        )}
-      </main>
-
-      {/* Demo Tour Controller */}
+      {/* Guided Tour Controller */}
       {demoMode && (
         <DemoTour
           onStepChange={handleDemoStepChange}
@@ -503,11 +592,20 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* One-Click Analysis Modal */}
+      {/* Analysis Progress Overlay Modal (Predict -> Risk -> Optimize -> Verify -> Decide) */}
       <AnalyzeModal
         isOpen={showAnalyzeModal}
         currentStage={analyzeStage}
         onClose={() => setShowAnalyzeModal(false)}
+      />
+
+      {/* Evidence & Provenance Drawer */}
+      <EvidenceDrawer
+        isOpen={isEvidenceDrawerOpen}
+        onClose={() => setIsEvidenceDrawerOpen(false)}
+        recommendation={selectedRecommendation}
+        evaluation={evaluation}
+        forecastData={activeForecast}
       />
     </div>
   );

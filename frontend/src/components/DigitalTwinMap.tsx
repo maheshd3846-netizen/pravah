@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { NodeItem, RouteItem, VehicleItem, NodeRiskDetail } from '../types';
+import { tokens } from '../tokens';
 
 interface DigitalTwinMapProps {
   nodes: NodeItem[];
@@ -9,22 +10,26 @@ interface DigitalTwinMapProps {
   selectedNodeId?: string | null;
   onSelectNode: (node: NodeItem) => void;
   onViewIntelligence?: (node: NodeItem) => void;
+  onViewRisk?: (node?: NodeItem) => void;
   selectedRouteId?: string | null;
   onSelectRoute: (route: RouteItem) => void;
   highlightedRouteId?: string | null;
+  children?: React.ReactNode;
 }
 
 export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
   nodes,
   routes,
-  vehicles: _vehicles,
+  vehicles = [],
   nodeRisks,
   selectedNodeId,
   onSelectNode,
   onViewIntelligence,
+  onViewRisk,
   selectedRouteId,
   onSelectRoute,
   highlightedRouteId,
+  children,
 }) => {
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -32,6 +37,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showLabels, setShowLabels] = useState<boolean>(true);
   const [showContours, setShowContours] = useState<boolean>(true);
+  const [hoveredNode, setHoveredNode] = useState<NodeItem | null>(null);
 
   // Compute geographical bounds
   const bounds = useMemo(() => {
@@ -90,23 +96,71 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Node echelon styling
+  // Close inspection drawer on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedNodeId) onSelectNode({} as any);
+        if (selectedRouteId) onSelectRoute({} as any);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId, selectedRouteId, onSelectNode, onSelectRoute]);
+
+  // Node hierarchy radius
+  const getNodeRadius = (type: string) => {
+    switch (type) {
+      case 'CENTRAL_DEPOT':
+        return 14;
+      case 'REGIONAL_HUB':
+        return 11;
+      case 'TRANSIT_POINT':
+        return 8;
+      case 'FORWARD_POST':
+        return 9;
+      default:
+        return 8;
+    }
+  };
+
+  // Node operational status & color
   const getNodeColor = (node: NodeItem) => {
     const risk = nodeRisks[node.id] || nodeRisks[node.code];
-    if (risk && (risk.level === 'CRITICAL' || risk.level === 'HIGH')) {
-      return '#ef4444';
+    if (risk) {
+      if (risk.level === 'CRITICAL') return tokens.colors.status.critical;
+      if (risk.level === 'HIGH') return tokens.colors.status.highRisk;
+      if (risk.level === 'MODERATE') return tokens.colors.status.warning;
     }
     switch (node.type) {
       case 'CENTRAL_DEPOT':
-        return '#3b82f6';
+        return tokens.colors.brand.primary;
       case 'REGIONAL_HUB':
-        return '#06b6d4';
-      case 'TRANSIT_POINT':
-        return '#a855f7';
+        return tokens.colors.status.info;
       case 'FORWARD_POST':
-        return '#10b981';
+        return tokens.colors.status.healthy;
       default:
-        return '#94a3b8';
+        return tokens.colors.text.secondary;
+    }
+  };
+
+  // Route styling
+  const getRouteStroke = (route: RouteItem) => {
+    if (route.id === selectedRouteId || route.route_code === selectedRouteId) {
+      return '#4EE0BF'; // Selected: teal/bright neutral
+    }
+    if (route.id === highlightedRouteId || route.route_code === highlightedRouteId) {
+      return tokens.colors.brand.primary; // Active/highlighted: teal
+    }
+    switch (route.status) {
+      case 'BLOCKED':
+        return tokens.colors.status.critical; // Blocked: red
+      case 'DEGRADED':
+        return tokens.colors.status.warning; // Degraded: amber
+      case 'ACTIVE':
+        return tokens.colors.brand.primary; // Active: teal
+      default:
+        return '#2B3B52'; // Normal route: muted gray-blue
     }
   };
 
@@ -123,22 +177,22 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
       style={{
         position: 'relative',
         height: '100%',
-        backgroundColor: '#070b13',
+        backgroundColor: tokens.colors.background.app,
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${tokens.colors.border.subtle}`,
       }}
     >
       {/* Tactical Panel Header */}
       <div className="panel-header">
         <div className="panel-title">
-          <span style={{ color: '#00e5ff', fontSize: '13px' }}>❖</span>
+          <span style={{ color: tokens.colors.brand.primary, fontSize: '13px' }}>❖</span>
           <span>LOGISTICS DIGITAL TWIN</span>
           <span
             style={{
               fontSize: '10px',
-              color: '#64748b',
+              color: tokens.colors.text.muted,
               fontWeight: 400,
-              fontFamily: 'var(--font-mono)',
+              fontFamily: tokens.typography.fontMono,
               marginLeft: '4px',
             }}
           >
@@ -152,8 +206,8 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
             style={{
               padding: '2px 8px',
               fontSize: '10px',
-              color: showContours ? '#00e5ff' : '#64748b',
-              borderColor: showContours ? 'rgba(0, 229, 255, 0.4)' : undefined,
+              color: showContours ? tokens.colors.brand.primary : tokens.colors.text.muted,
+              borderColor: showContours ? tokens.colors.brand.primaryBorder : undefined,
             }}
           >
             {showContours ? 'TERRAIN: ON' : 'TERRAIN: OFF'}
@@ -201,9 +255,7 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
           cursor: isDragging ? 'grabbing' : 'grab',
           position: 'relative',
           overflow: 'hidden',
-          backgroundColor: '#070b13',
-          backgroundImage:
-            'radial-gradient(ellipse 90% 70% at 50% 50%, rgba(14, 23, 40, 0.7) 0%, rgba(6, 9, 16, 0.98) 100%)',
+          backgroundColor: tokens.colors.background.app,
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -221,20 +273,6 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
           }}
         >
           <defs>
-            {/* Tactical Glow Filters */}
-            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-            <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-
             {/* Pattern for Blocked Route Hazard Striping */}
             <pattern
               id="hazard-stripes"
@@ -243,687 +281,617 @@ export const DigitalTwinMap: React.FC<DigitalTwinMapProps> = ({
               patternTransform="rotate(45 0 0)"
               patternUnits="userSpaceOnUse"
             >
-              <line x1="0" y1="0" x2="0" y2="8" stroke="#ef4444" strokeWidth="4" />
-              <line x1="4" y1="0" x2="4" y2="8" stroke="#1f2937" strokeWidth="4" />
+              <line x1="0" y1="0" x2="0" y2="8" stroke={tokens.colors.status.critical} strokeWidth="4" />
+              <line x1="4" y1="0" x2="4" y2="8" stroke={tokens.colors.background.secondary} strokeWidth="4" />
             </pattern>
-
-            {/* Subtle Topo Gradient */}
-            <linearGradient id="topo-fade" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.08" />
-              <stop offset="50%" stopColor="#0f172a" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#064e3b" stopOpacity="0.08" />
-            </linearGradient>
           </defs>
 
-          {/* 1. Tactical MGRS Coordinates & Elevation Grid Background */}
-          <g opacity={0.35}>
-            {/* Coordinate Graticules */}
-            {[100, 200, 300, 400, 500, 600, 700, 800].map((gx) => (
+          {/* Clean Tactical Grid Lines */}
+          <g opacity={0.3}>
+            {Array.from({ length: 9 }).map((_, i) => (
               <line
-                key={`gx-${gx}`}
-                x1={gx}
-                y1={20}
-                x2={gx}
-                y2={mapHeight - 20}
-                stroke="rgba(255, 255, 255, 0.05)"
-                strokeDasharray="2 6"
+                key={`h-${i}`}
+                x1={0}
+                y1={i * 60 + 20}
+                x2={mapWidth}
+                y2={i * 60 + 20}
+                stroke={tokens.colors.border.subtle}
+                strokeWidth={0.8}
+                strokeDasharray="2,4"
               />
             ))}
-            {[80, 160, 240, 320, 400, 480].map((gy) => (
+            {Array.from({ length: 15 }).map((_, i) => (
               <line
-                key={`gy-${gy}`}
-                x1={20}
-                y1={gy}
-                x2={mapWidth - 20}
-                y2={gy}
-                stroke="rgba(255, 255, 255, 0.05)"
-                strokeDasharray="2 6"
+                key={`v-${i}`}
+                x1={i * 65 + 10}
+                y1={0}
+                x2={i * 65 + 10}
+                y2={mapHeight}
+                stroke={tokens.colors.border.subtle}
+                strokeWidth={0.8}
+                strokeDasharray="2,4"
               />
-            ))}
-
-            {/* Reticle Crosshairs at major intersections */}
-            {[
-              [200, 160],
-              [400, 160],
-              [600, 160],
-              [800, 160],
-              [200, 320],
-              [400, 320],
-              [600, 320],
-              [800, 320],
-            ].map(([cx, cy], i) => (
-              <g key={`cross-${i}`} transform={`translate(${cx}, ${cy})`}>
-                <line x1="-5" y1="0" x2="5" y2="0" stroke="rgba(0, 229, 255, 0.3)" strokeWidth="0.8" />
-                <line x1="0" y1="-5" x2="0" y2="5" stroke="rgba(0, 229, 255, 0.3)" strokeWidth="0.8" />
-              </g>
             ))}
           </g>
 
-          {/* 2. Topographical Himalayan Contour Isolines (Natural Elevation Modeling) */}
+          {/* Synthetic Mountain Elevation Contours */}
           {showContours && (
-            <g opacity={0.22}>
-              {/* Karakoram Ridge Ridge Contour 5,200m */}
+            <g opacity={0.25}>
               <path
-                d="M 60,110 Q 180,85 320,130 T 560,95 T 780,140 T 900,105"
+                d="M 120 400 Q 240 320 380 340 T 640 280 T 820 180"
                 fill="none"
-                stroke="#38bdf8"
-                strokeWidth="1"
-                strokeDasharray="4 3"
+                stroke={tokens.colors.border.default}
+                strokeWidth={1}
+                strokeDasharray="4,6"
               />
-              {/* High Altitude Plateau Contour 4,600m */}
               <path
-                d="M 50,170 Q 200,140 380,200 T 640,165 T 880,210"
+                d="M 160 440 Q 280 360 420 370 T 680 310 T 860 210"
                 fill="none"
-                stroke="#60a5fa"
-                strokeWidth="0.8"
+                stroke={tokens.colors.border.subtle}
+                strokeWidth={0.8}
               />
-              {/* Indus Valley Fracture Line 3,400m */}
               <path
-                d="M 70,260 Q 240,290 420,240 T 700,285 T 890,260"
+                d="M 190 280 Q 320 180 480 210 T 720 140"
                 fill="none"
-                stroke="#06b6d4"
-                strokeWidth="1.2"
-                strokeDasharray="8 4"
+                stroke={tokens.colors.border.default}
+                strokeWidth={1}
+                strokeDasharray="5,5"
               />
-              {/* Zanskar Escarpment 4,800m */}
-              <path
-                d="M 60,360 Q 210,330 390,390 T 660,350 T 880,410"
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="0.8"
-              />
-              {/* Southern Foothill Contour 2,800m */}
-              <path
-                d="M 50,450 Q 250,420 460,465 T 780,430 T 910,470"
-                fill="none"
-                stroke="#64748b"
-                strokeWidth="0.8"
-              />
-
-              {/* Geographic Sector Watermarks */}
-              <text x="80" y="70" fill="rgba(255, 255, 255, 0.15)" fontSize="9" fontFamily="var(--font-mono)" letterSpacing="0.1em">
-                ▲ KARAKORAM SECTOR // ELEVATION 5,400m MSL
-              </text>
-              <text x="520" y="270" fill="rgba(0, 229, 255, 0.15)" fontSize="9" fontFamily="var(--font-mono)" letterSpacing="0.1em">
-                ≈ INDUS RIVER BASIN TRANSIT CORRIDOR
-              </text>
-              <text x="80" y="475" fill="rgba(255, 255, 255, 0.15)" fontSize="9" fontFamily="var(--font-mono)" letterSpacing="0.1em">
-                ▲ ZANSKAR RANGE // HIGH-ALTITUDE COMBAT RIDGE
-              </text>
             </g>
           )}
 
-          {/* 3. Corridors & Supply Routes */}
-          {routes.map((route) => {
-            const src = nodeMap.get(route.source_node_id);
-            const dst = nodeMap.get(route.destination_node_id);
-            if (!src || !dst) return null;
+          {/* Corridors / Routes */}
+          <g>
+            {routes.map((route) => {
+              const srcNode = nodeMap.get(route.source_node_id);
+              const dstNode = nodeMap.get(route.destination_node_id);
+              if (!srcNode || !dstNode) return null;
 
-            const p1 = project(src.latitude, src.longitude);
-            const p2 = project(dst.latitude, dst.longitude);
+              const p1 = project(srcNode.latitude, srcNode.longitude);
+              const p2 = project(dstNode.latitude, dstNode.longitude);
+              const isSelected = selectedRouteId === route.id || selectedRouteId === route.route_code;
+              const isHighlighted = highlightedRouteId === route.id || highlightedRouteId === route.route_code;
+              const isBlocked = route.status === 'BLOCKED';
+              const strokeColor = getRouteStroke(route);
 
-            const isBlocked = route.status === 'BLOCKED';
-            const isDegraded = route.status === 'DEGRADED';
-            const isSelected =
-              selectedRouteId === route.id || selectedRouteId === route.route_code;
-            const isHighlighted =
-              highlightedRouteId === route.id ||
-              highlightedRouteId === route.route_code;
+              return (
+                <g key={route.id} onClick={() => onSelectRoute(route)} style={{ cursor: 'pointer' }}>
+                  {/* Outer click hit target */}
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke="transparent"
+                    strokeWidth={14}
+                  />
 
-            let strokeColor = '#1e2d4a';
-            let strokeDash = 'none';
-            let strokeWidth = 2.2;
+                  {/* Route Corridor Path */}
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={strokeColor}
+                    strokeWidth={isSelected || isHighlighted ? 3 : isBlocked ? 2 : 1.5}
+                    strokeDasharray={isBlocked ? '6,4' : undefined}
+                    opacity={isSelected || isHighlighted ? 1 : isBlocked ? 0.9 : 0.65}
+                  />
 
-            if (isBlocked) {
-              strokeColor = '#ef4444';
-              strokeDash = '6,4';
-              strokeWidth = 3;
-            } else if (isDegraded) {
-              strokeColor = '#f59e0b';
-              strokeDash = '5,4';
-              strokeWidth = 2.6;
-            } else if (isSelected) {
-              strokeColor = '#00e5ff';
-              strokeWidth = 3.5;
-            } else if (isHighlighted) {
-              strokeColor = '#10b981';
-              strokeWidth = 3.5;
-            } else {
-              strokeColor = '#2563eb';
-              strokeWidth = 2;
-            }
-
-            const midX = (p1.x + p2.x) / 2;
-            const midY = (p1.y + p2.y) / 2;
-
-            return (
-              <g
-                key={route.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectRoute(route);
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                {/* Wide invisible hit area for crisp interaction */}
-                <line
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
-                  stroke="transparent"
-                  strokeWidth={16}
-                />
-
-                {/* Dark roadbed underlay */}
-                <line
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
-                  stroke="#050810"
-                  strokeWidth={strokeWidth + 3}
-                  opacity={0.8}
-                />
-
-                {/* Main corridor line */}
-                <line
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
-                  stroke={strokeColor}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={strokeDash}
-                  opacity={isSelected || isHighlighted ? 1 : 0.82}
-                  filter={
-                    isSelected
-                      ? 'url(#glow-cyan)'
-                      : isHighlighted
-                      ? 'url(#glow-emerald)'
-                      : isBlocked
-                      ? 'url(#glow-red)'
-                      : undefined
-                  }
-                />
-
-                {/* Animated Convoy Pulse for Active/Recommended Route */}
-                {(isSelected || isHighlighted || (!isBlocked && route.status === 'AVAILABLE')) && (
-                  <circle r={3} fill={isHighlighted ? '#10b981' : isSelected ? '#00e5ff' : '#60a5fa'} opacity={0.9}>
-                    <animateMotion
-                      path={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`}
-                      dur={`${Math.max(3, (route.base_travel_hours || 4) * 0.8)}s`}
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                )}
-
-                {/* Blocked Barrier Marker */}
-                {isBlocked && (
-                  <g transform={`translate(${midX}, ${midY})`}>
-                    <circle r={9} fill="#0b0f19" stroke="#ef4444" strokeWidth={1.8} />
-                    <line x1="-4" y1="-4" x2="4" y2="4" stroke="#ef4444" strokeWidth={2} />
-                    <line x1="4" y1="-4" x2="-4" y2="4" stroke="#ef4444" strokeWidth={2} />
-                  </g>
-                )}
-
-                {/* Mountain Pass Elevation Badge on High Altitude Passes */}
-                {route.terrain_type === 'HIGH_ALTITUDE_PASS' && !isBlocked && (
-                  <g transform={`translate(${midX}, ${midY})`}>
-                    <rect
-                      x={-14}
-                      y={-6}
-                      width={28}
-                      height={12}
-                      rx={2}
-                      fill="rgba(10, 16, 28, 0.88)"
-                      stroke={isDegraded ? '#f59e0b' : 'rgba(255, 255, 255, 0.15)'}
-                      strokeWidth={0.6}
-                    />
+                  {/* Route Label */}
+                  {showLabels && (
                     <text
-                      textAnchor="middle"
-                      dy="2.5"
-                      fill={isDegraded ? '#fbbf24' : '#94a3b8'}
-                      fontSize="7.5"
-                      fontFamily="var(--font-mono)"
-                      fontWeight="bold"
-                    >
-                      ⛰ PASS
-                    </text>
-                  </g>
-                )}
-              </g>
-            );
-          })}
-
-          {/* 4. Nodes (Echelon Depots, Hubs, Transit Points, Forward Posts) */}
-          {nodes.map((node) => {
-            const pos = project(node.latitude, node.longitude);
-            const isSelected =
-              selectedNodeId === node.id || selectedNodeId === node.code;
-            const nodeColor = getNodeColor(node);
-            const isDepot = node.type === 'CENTRAL_DEPOT';
-            const isHub = node.type === 'REGIONAL_HUB';
-            const isForward = node.type === 'FORWARD_POST';
-            const risk = nodeRisks[node.id] || nodeRisks[node.code];
-            const isHighRisk =
-              risk && (risk.level === 'CRITICAL' || risk.level === 'HIGH');
-
-            return (
-              <g
-                key={node.id}
-                transform={`translate(${pos.x}, ${pos.y})`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectNode(node);
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                {/* High Risk Tactical Perimeter Alert */}
-                {isHighRisk && (
-                  <circle
-                    r={20}
-                    fill="none"
-                    stroke="#ef4444"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 2"
-                    opacity={0.8}
-                  >
-                    <animate
-                      attributeName="r"
-                      values="15;26;15"
-                      dur="2.4s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      values="0.9;0.1;0.9"
-                      dur="2.4s"
-                      repeatCount="indefinite"
-                    />
-                  </circle>
-                )}
-
-                {/* Selection Reticle Ring */}
-                {isSelected && (
-                  <g>
-                    <circle
-                      r={isDepot ? 20 : isHub ? 17 : 14}
-                      fill="none"
-                      stroke="#00e5ff"
-                      strokeWidth={1.8}
-                      filter="url(#glow-cyan)"
-                      strokeDasharray="6 3"
-                    >
-                      <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        from="0"
-                        to="360"
-                        dur="10s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-                  </g>
-                )}
-
-                {/* Tactical Echelon Icon Shapes */}
-                {isDepot ? (
-                  // Central Base Depot: Reinforced Command Diamond
-                  <g>
-                    <polygon
-                      points="0,-14 14,0 0,14 -14,0"
-                      fill="#0e1b33"
-                      stroke={nodeColor}
-                      strokeWidth={2}
-                    />
-                    <polygon
-                      points="0,-8 8,0 0,8 -8,0"
-                      fill={nodeColor}
-                    />
-                  </g>
-                ) : isHub ? (
-                  // Regional Hub: Hexagon Depot Fortress
-                  <g>
-                    <polygon
-                      points="0,-11 10,-5 10,5 0,11 -10,5 -10,-5"
-                      fill="#0e2333"
-                      stroke={nodeColor}
-                      strokeWidth={1.8}
-                    />
-                    <circle r={3.5} fill={nodeColor} />
-                  </g>
-                ) : isForward ? (
-                  // Forward Defense Post: Target Crosshair with Fortified Circle
-                  <g>
-                    <circle
-                      r={8.5}
-                      fill="#0a2118"
-                      stroke={nodeColor}
-                      strokeWidth={1.8}
-                    />
-                    <circle r={3.5} fill={nodeColor} />
-                  </g>
-                ) : (
-                  // Transit Point / Staging Base: Hardened Square Bunker
-                  <g>
-                    <rect
-                      x={-7.5}
-                      y={-7.5}
-                      width={15}
-                      height={15}
-                      fill="#1e1833"
-                      stroke={nodeColor}
-                      strokeWidth={1.8}
-                      rx={2}
-                    />
-                    <rect x={-3} y={-3} width={6} height={6} fill={nodeColor} />
-                  </g>
-                )}
-
-                {/* Node Code Label */}
-                {showLabels && (
-                  <g transform="translate(0, 19)">
-                    <rect
-                      x={-24}
-                      y={-8}
-                      width={48}
-                      height={15}
-                      fill="rgba(9, 14, 24, 0.92)"
-                      stroke={isSelected ? '#00e5ff' : 'rgba(255, 255, 255, 0.16)'}
-                      strokeWidth={0.8}
-                      rx={2.5}
-                    />
-                    <text
-                      textAnchor="middle"
-                      dy="3"
-                      fill={isHighRisk ? '#fca5a5' : '#f8fafc'}
+                      x={(p1.x + p2.x) / 2}
+                      y={(p1.y + p2.y) / 2 - 4}
+                      fill={isBlocked ? tokens.colors.status.critical : tokens.colors.text.muted}
                       fontSize="9"
-                      fontWeight="bold"
-                      fontFamily="var(--font-mono)"
+                      fontFamily={tokens.typography.fontMono}
+                      textAnchor="middle"
+                      opacity={0.85}
+                    >
+                      {route.route_code}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Active Vehicles / Convoys */}
+          <g>
+            {vehicles.map((veh) => {
+              const node = nodeMap.get(veh.current_node_id);
+              if (!node) return null;
+              const pos = project(node.latitude, node.longitude);
+              return (
+                <g key={veh.id} transform={`translate(${pos.x + 8}, ${pos.y - 8})`}>
+                  <rect
+                    x={-4}
+                    y={-4}
+                    width={8}
+                    height={8}
+                    fill={tokens.colors.background.elevated}
+                    stroke={tokens.colors.brand.primary}
+                    strokeWidth={1}
+                    transform="rotate(45)"
+                  />
+                  <text
+                    x={8}
+                    y={3}
+                    fill={tokens.colors.brand.primary}
+                    fontSize="8"
+                    fontFamily={tokens.typography.fontMono}
+                  >
+                    {veh.vehicle_code}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Logistics Grid Nodes */}
+          <g>
+            {nodes.map((node) => {
+              const pos = project(node.latitude, node.longitude);
+              const r = getNodeRadius(node.type);
+              const nodeColor = getNodeColor(node);
+              const isSelected = selectedNodeId === node.id || selectedNodeId === node.code;
+              const risk = nodeRisks[node.id] || nodeRisks[node.code];
+              const isCritical = risk && (risk.level === 'CRITICAL' || risk.level === 'HIGH');
+
+              return (
+                <g
+                  key={node.id}
+                  transform={`translate(${pos.x}, ${pos.y})`}
+                  onClick={() => onSelectNode(node)}
+                  onMouseEnter={() => setHoveredNode(node)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {/* Selection / Critical Halo */}
+                  {isSelected && (
+                    <circle
+                      r={r + 6}
+                      fill="none"
+                      stroke={tokens.colors.brand.primary}
+                      strokeWidth={1.5}
+                      strokeDasharray="3,3"
+                    />
+                  )}
+                  {isCritical && !isSelected && (
+                    <circle
+                      r={r + 5}
+                      fill="none"
+                      stroke={tokens.colors.status.critical}
+                      strokeWidth={1.2}
+                      opacity={0.8}
+                    />
+                  )}
+
+                  {/* Outer boundary ring for Depot / Hubs */}
+                  {node.type === 'CENTRAL_DEPOT' && (
+                    <polygon
+                      points={`0,-${r + 4} ${r + 4},0 0,${r + 4} -${r + 4},0`}
+                      fill="none"
+                      stroke={tokens.colors.brand.primary}
+                      strokeWidth={1.5}
+                    />
+                  )}
+
+                  {/* Main Node Body */}
+                  <circle
+                    r={r}
+                    fill={tokens.colors.background.surface}
+                    stroke={nodeColor}
+                    strokeWidth={2}
+                  />
+
+                  {/* Inner Node Core */}
+                  <circle
+                    r={r * 0.45}
+                    fill={nodeColor}
+                  />
+
+                  {/* Node Code Label */}
+                  {showLabels && (
+                    <text
+                      y={r + 12}
+                      fill={isSelected ? tokens.colors.brand.primary : tokens.colors.text.primary}
+                      fontSize="10"
+                      fontWeight={isSelected ? 700 : 600}
+                      fontFamily={tokens.typography.fontMono}
+                      textAnchor="middle"
+                      letterSpacing="0.04em"
                     >
                       {node.code}
                     </text>
-                  </g>
-                )}
-              </g>
-            );
-          })}
+                  )}
+                </g>
+              );
+            })}
+          </g>
         </svg>
 
-        {/* Tactical Legend Overlay */}
+        {/* Hover Tooltip (Section: Small concise tooltip) */}
+        {hoveredNode && !selectedNode && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              backgroundColor: tokens.colors.background.surface,
+              border: `1px solid ${tokens.colors.border.hover}`,
+              borderRadius: tokens.radii.card,
+              padding: '8px 12px',
+              pointerEvents: 'none',
+              zIndex: 25,
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+              maxWidth: '240px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <span className="font-mono" style={{ fontWeight: 700, color: tokens.colors.brand.primary, fontSize: '12px' }}>
+                {hoveredNode.code}
+              </span>
+              <span style={{ fontSize: '9px', color: tokens.colors.text.muted, textTransform: 'uppercase' }}>
+                {hoveredNode.type.replace('_', ' ')}
+              </span>
+            </div>
+            <div style={{ fontSize: '11px', color: tokens.colors.text.primary, marginTop: '2px', fontWeight: 600 }}>
+              {hoveredNode.name}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', fontSize: '10px', color: tokens.colors.text.secondary, marginTop: '4px' }}>
+              <span>Elev: {hoveredNode.elevation}m</span>
+              <span>•</span>
+              <span style={{ color: tokens.colors.brand.primary }}>Click to inspect</span>
+            </div>
+          </div>
+        )}
+
+        {/* Legend Overlay */}
         <div
           style={{
             position: 'absolute',
             bottom: '12px',
             left: '12px',
-            backgroundColor: 'rgba(10, 16, 28, 0.9)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '5px',
+            backgroundColor: tokens.colors.background.drawer,
+            border: `1px solid ${tokens.colors.border.subtle}`,
+            borderRadius: tokens.radii.badge,
             padding: '8px 12px',
             fontSize: '10px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            backdropFilter: 'blur(8px)',
-            boxShadow: 'var(--shadow-md)',
+            color: tokens.colors.text.secondary,
+            fontFamily: tokens.typography.fontMono,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
             pointerEvents: 'none',
           }}
         >
-          <div
-            style={{
-              fontFamily: 'var(--font-heading)',
-              fontWeight: 700,
-              color: '#94a3b8',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              fontSize: '10px',
-              marginBottom: '2px',
-            }}
-          >
-            GRID ECHELONS
+          <div style={{ fontWeight: 700, color: tokens.colors.text.primary, marginBottom: '4px', textTransform: 'uppercase' }}>
+            ECHELON & CORRIDOR MATRIX
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', transform: 'rotate(45deg)', backgroundColor: '#3b82f6' }} />
-            <span style={{ color: '#cbd5e1' }}>Central Depot (CD-01)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: tokens.colors.brand.primary }} />
+            <span>Central Depot (CD-01)</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', backgroundColor: '#06b6d4', borderRadius: '1px' }} />
-            <span style={{ color: '#cbd5e1' }}>Regional Hubs (RH-01..03)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: tokens.colors.status.info }} />
+            <span>Regional Hubs (RH-01..03)</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', backgroundColor: '#a855f7' }} />
-            <span style={{ color: '#cbd5e1' }}>Transit Bases (SB-01..05)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: tokens.colors.status.healthy }} />
+            <span>Forward Posts (FP-01..06)</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-            <span style={{ color: '#cbd5e1' }}>Forward Posts (FP-01..06)</span>
-          </div>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '4px', paddingTop: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '2px', backgroundColor: '#38bdf8' }} />
-              <span style={{ color: '#94a3b8' }}>Available</span>
-              <span style={{ width: '12px', height: '2px', backgroundColor: '#f59e0b', borderTop: '1px dashed #f59e0b' }} />
-              <span style={{ color: '#94a3b8' }}>Degraded</span>
-              <span style={{ width: '12px', height: '2px', backgroundColor: '#ef4444', borderTop: '1px dashed #ef4444' }} />
-              <span style={{ color: '#94a3b8' }}>Blocked</span>
-            </div>
+          <div style={{ borderTop: `1px solid ${tokens.colors.border.subtle}`, paddingTop: '4px', display: 'flex', gap: '10px' }}>
+            <span style={{ color: tokens.colors.brand.primary }}>— Available</span>
+            <span style={{ color: tokens.colors.status.warning }}>-- Degraded</span>
+            <span style={{ color: tokens.colors.status.critical }}>··· Blocked</span>
           </div>
         </div>
 
-        {/* Selected Node Floating Tactical HUD Drawer */}
+        {/* Selected Node Inspection Drawer (Contextual 380px Drawer) */}
         {selectedNode && (
-          <div
+          <aside
+            aria-label="Node Inspection Drawer"
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
-              width: '260px',
-              backgroundColor: 'rgba(11, 18, 32, 0.94)',
-              border: '1px solid rgba(0, 229, 255, 0.4)',
-              borderRadius: '6px',
-              padding: '14px',
-              boxShadow: 'var(--shadow-lg), 0 0 20px rgba(0, 229, 255, 0.15)',
-              backdropFilter: 'blur(12px)',
-              zIndex: 30,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '380px',
+              backgroundColor: tokens.colors.background.surface,
+              borderLeft: `1px solid ${tokens.colors.border.subtle}`,
+              padding: '24px 22px',
+              boxShadow: '-6px 0 28px rgba(0,0,0,0.45)',
+              zIndex: 35,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              overflowY: 'auto',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    color: '#f8fafc',
-                    fontFamily: 'var(--font-mono)',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {selectedNode.code}
-                </div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>
-                  {selectedNode.name}
-                </div>
-              </div>
-              <span className="badge badge-cyan">{selectedNode.type}</span>
-            </div>
-
-            <div
-              style={{
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                marginTop: '10px',
-                paddingTop: '8px',
-                fontSize: '11px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Elevation MSL:</span>
-                <span className="font-mono" style={{ color: '#38bdf8', fontWeight: 600 }}>
-                  {selectedNode.elevation}m
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Storage Cap:</span>
-                <span className="font-mono">{selectedNode.storage_capacity.toLocaleString()} u</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Safety Stock:</span>
-                <span className="font-mono">{selectedNode.safety_stock_days} days</span>
-              </div>
-
-              {/* Live Risk Status if present */}
-              {nodeRisks[selectedNode.id] && (
-                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', marginTop: '8px', paddingTop: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="text-secondary">Overall Risk:</span>
-                    <span
-                      className={`badge ${
-                        nodeRisks[selectedNode.id].level === 'CRITICAL' ||
-                        nodeRisks[selectedNode.id].level === 'HIGH'
-                          ? 'badge-critical'
-                          : 'badge-ready'
-                      }`}
-                    >
-                      {nodeRisks[selectedNode.id].level} ({nodeRisks[selectedNode.id].overall_risk.toFixed(2)})
-                    </span>
+            <div>
+              {/* Header with Close Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div>
+                  <div
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: tokens.colors.text.primary,
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {selectedNode.code}
+                  </div>
+                  <div style={{ fontSize: '12px', color: tokens.colors.text.secondary, marginTop: '2px' }}>
+                    {selectedNode.name}
                   </div>
                 </div>
-              )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span
+                    className={`badge ${
+                      nodeRisks[selectedNode.id]?.level === 'CRITICAL'
+                        ? 'badge-critical'
+                        : nodeRisks[selectedNode.id]?.level === 'HIGH'
+                        ? 'badge-high'
+                        : nodeRisks[selectedNode.id]?.level === 'MODERATE'
+                        ? 'badge-warning'
+                        : 'badge-healthy'
+                    }`}
+                    style={{ fontSize: '10px', padding: '3px 8px', letterSpacing: '0.04em' }}
+                  >
+                    {nodeRisks[selectedNode.id]?.level ? `${nodeRisks[selectedNode.id].level} RISK` : 'OPERATIONAL'}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectNode({} as any);
+                    }}
+                    className="btn btn-secondary"
+                    style={{ padding: '2px 7px', fontSize: '10px' }}
+                    title="Close drawer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
 
-              {/* On-hand Commodity Inventory */}
-              <div style={{ marginTop: '10px' }}>
+              {/* Inventory breakdown without nested boxes */}
+              <div style={{ marginTop: '16px', marginBottom: '14px' }}>
                 <div
                   style={{
-                    fontSize: '10px',
-                    color: '#64748b',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: tokens.colors.text.muted,
                     textTransform: 'uppercase',
-                    fontFamily: 'var(--font-heading)',
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    marginBottom: '4px',
+                    letterSpacing: '0.05em',
+                    marginBottom: '8px',
                   }}
                 >
-                  CRITICAL ON-HAND STOCKS
+                  Inventory
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '10px' }}>
-                  {Object.entries(selectedNode.initial_inventory)
-                    .slice(0, 4)
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {Object.entries(selectedNode.initial_inventory || {})
+                    .slice(0, 3)
                     .map(([item, qty]) => (
                       <div
                         key={item}
                         style={{
-                          backgroundColor: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255, 255, 255, 0.06)',
-                          padding: '3px 6px',
-                          borderRadius: '3px',
                           display: 'flex',
                           justifyContent: 'space-between',
+                          fontSize: '12px',
                         }}
                       >
-                        <span style={{ color: '#94a3b8' }}>{item}:</span>
-                        <span className="font-mono" style={{ color: '#f8fafc', fontWeight: 600 }}>
-                          {qty}
+                        <span style={{ color: tokens.colors.text.secondary }}>
+                          {item.charAt(0) + item.slice(1).toLowerCase()}
+                        </span>
+                        <span className="font-mono" style={{ color: tokens.colors.text.primary, fontWeight: 600 }}>
+                          {qty} U
                         </span>
                       </div>
                     ))}
                 </div>
               </div>
 
+              <div style={{ height: '1px', backgroundColor: tokens.colors.border.subtle, margin: '14px 0' }} />
+
+              {/* Demand Pressure */}
+              <div style={{ marginBottom: '14px' }}>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: tokens.colors.text.muted,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Demand Pressure
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <div>
+                    <span style={{ color: tokens.colors.text.muted, fontSize: '11px' }}>P50 </span>
+                    <span className="font-mono" style={{ color: tokens.colors.brand.primary, fontWeight: 600 }}>853</span>
+                  </div>
+                  <div>
+                    <span style={{ color: tokens.colors.text.muted, fontSize: '11px' }}>P80 </span>
+                    <span className="font-mono" style={{ color: tokens.colors.status.warning, fontWeight: 600 }}>1,640</span>
+                  </div>
+                  <div>
+                    <span style={{ color: tokens.colors.text.muted, fontSize: '11px' }}>P95 </span>
+                    <span className="font-mono" style={{ color: tokens.colors.status.critical, fontWeight: 600 }}>2,705</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: tokens.colors.border.subtle, margin: '14px 0' }} />
+
+              {/* Safety Threshold & Stockout Probability */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: tokens.colors.text.muted, marginBottom: '3px' }}>
+                    Safety Threshold
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: tokens.colors.text.primary }}>
+                    1 hour
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '11px', color: tokens.colors.text.muted, marginBottom: '3px' }}>
+                    Stockout Probability
+                  </div>
+                  <div
+                    className="font-mono"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: nodeRisks[selectedNode.id]?.level === 'CRITICAL' ? tokens.colors.status.critical : tokens.colors.status.warning,
+                    }}
+                  >
+                    {nodeRisks[selectedNode.id]?.level === 'CRITICAL' ? '100%' : '92%'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: tokens.colors.border.subtle, margin: '14px 0' }} />
+
+              {/* Why Section */}
+              <div style={{ marginBottom: '16px' }}>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: tokens.colors.text.muted,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '6px',
+                  }}
+                >
+                  Why?
+                </div>
+                <div style={{ fontSize: '12px', color: tokens.colors.text.secondary, lineHeight: 1.6 }}>
+                  <div>• Demand surge</div>
+                  <div>• Route blockage</div>
+                  <div>• No inbound supply</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '10px' }}>
               {onViewIntelligence && (
                 <button
                   onClick={() => onViewIntelligence(selectedNode)}
                   className="btn btn-primary"
-                  style={{
-                    width: '100%',
-                    marginTop: '12px',
-                    fontSize: '10px',
-                    padding: '6px',
-                    borderRadius: '4px',
-                  }}
+                  style={{ width: '100%', justifyContent: 'center', fontSize: '12px', padding: '7px 12px' }}
                 >
-                  VIEW INTELLIGENCE ➔
+                  View Forecast →
                 </button>
               )}
+              <button
+                onClick={() => (onViewRisk ? onViewRisk(selectedNode) : onSelectNode(selectedNode))}
+                className="btn btn-secondary"
+                style={{ width: '100%', justifyContent: 'center', fontSize: '12px', padding: '7px 12px' }}
+              >
+                View Risk →
+              </button>
             </div>
-          </div>
+          </aside>
         )}
 
-        {/* Selected Route Floating Detail Card */}
+        {/* Selected Route Inspection Drawer */}
         {selectedRoute && !selectedNode && (
-          <div
+          <aside
+            aria-label="Route Inspection Drawer"
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
-              width: '260px',
-              backgroundColor: 'rgba(11, 18, 32, 0.94)',
-              border: '1px solid rgba(0, 229, 255, 0.4)',
-              borderRadius: '6px',
-              padding: '14px',
-              boxShadow: 'var(--shadow-lg), 0 0 20px rgba(0, 229, 255, 0.15)',
-              backdropFilter: 'blur(12px)',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '320px',
+              backgroundColor: tokens.colors.background.surface,
+              borderLeft: `1px solid ${tokens.colors.border.subtle}`,
+              padding: '20px 18px',
+              boxShadow: '-6px 0 24px rgba(0,0,0,0.35)',
               zIndex: 30,
+              overflowY: 'auto',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div>
                 <div
                   style={{
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    color: '#f8fafc',
-                    fontFamily: 'var(--font-mono)',
+                    fontSize: '17px',
+                    fontWeight: 700,
+                    color: tokens.colors.text.primary,
                   }}
                 >
                   {selectedRoute.route_code}
                 </div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>
+                <div style={{ fontSize: '12px', color: tokens.colors.text.secondary, marginTop: '2px' }}>
                   {selectedRoute.terrain_type}
                 </div>
               </div>
-              <span
-                className={`badge ${
-                  selectedRoute.status === 'BLOCKED'
-                    ? 'badge-critical'
-                    : selectedRoute.status === 'DEGRADED'
-                    ? 'badge-warning'
-                    : 'badge-ready'
-                }`}
-              >
-                {selectedRoute.status}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span
+                  className={`badge ${
+                    selectedRoute.status === 'BLOCKED'
+                      ? 'badge-critical'
+                      : selectedRoute.status === 'DEGRADED'
+                      ? 'badge-warning'
+                      : 'badge-healthy'
+                  }`}
+                >
+                  {selectedRoute.status}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectRoute({} as any);
+                  }}
+                  className="btn btn-secondary"
+                  style={{ padding: '2px 7px', fontSize: '10px' }}
+                  title="Close drawer"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            <div
-              style={{
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                marginTop: '10px',
-                paddingTop: '8px',
-                fontSize: '11px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Distance:</span>
-                <span className="font-mono">{selectedRoute.distance_km} km</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: tokens.colors.text.secondary }}>Distance</span>
+                <span className="font-mono" style={{ color: tokens.colors.text.primary, fontWeight: 600 }}>
+                  {selectedRoute.distance_km} km
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Transit Time:</span>
-                <span className="font-mono">{selectedRoute.base_travel_hours} hours</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: tokens.colors.text.secondary }}>Transit Time</span>
+                <span className="font-mono" style={{ color: tokens.colors.text.primary, fontWeight: 600 }}>
+                  {selectedRoute.base_travel_hours} hours
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Corridor Cap:</span>
-                <span className="font-mono">{selectedRoute.max_capacity} units</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: tokens.colors.text.secondary }}>Corridor Capacity</span>
+                <span className="font-mono" style={{ color: tokens.colors.text.primary, fontWeight: 600 }}>
+                  {selectedRoute.max_capacity} units
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                <span className="text-secondary">Reliability:</span>
-                <span className="font-mono" style={{ color: '#10b981' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: tokens.colors.text.secondary }}>Reliability</span>
+                <span className="font-mono" style={{ color: tokens.colors.status.healthy, fontWeight: 600 }}>
                   {(selectedRoute.reliability_score * 100).toFixed(0)}%
                 </span>
               </div>
             </div>
-          </div>
+          </aside>
         )}
+
+        {/* Floating Overlays */}
+        {children}
       </div>
     </div>
   );
 };
+
+export default DigitalTwinMap;

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { AlertItem, NodeRiskDetail } from '../types';
+import { tokens } from '../tokens';
 
 interface RiskPanelProps {
   alerts: AlertItem[];
@@ -30,29 +31,23 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
       {/* Panel Header */}
       <div className="panel-header">
         <div className="panel-title">
-          <span style={{ color: '#ef4444', fontSize: '13px' }}>⚠</span>
+          <span style={{ color: tokens.colors.status.critical, fontSize: '13px' }}>⚠</span>
           <span>CRITICAL RISKS & EARLY WARNINGS</span>
         </div>
-        <span
-          className="badge badge-critical"
-          style={{
-            boxShadow: '0 0 10px rgba(239, 68, 68, 0.3)',
-          }}
-        >
+        <span className="badge badge-critical">
           {alerts.length} ALERTS
         </span>
       </div>
 
-      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Active Node Risk Breakdown HUD */}
+      <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* Overall Network Risk & 5-Factor Risk Intelligence */}
         {activeAssessment && (
           <div
             style={{
-              backgroundColor: 'rgba(16, 24, 40, 0.75)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '5px',
-              padding: '12px',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              backgroundColor: tokens.colors.background.secondary,
+              border: `1px solid ${tokens.colors.border.subtle}`,
+              borderRadius: tokens.radii.card,
+              padding: '10px 12px',
             }}
           >
             <div
@@ -60,52 +55,58 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '10px',
+                marginBottom: '8px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
-                  className="font-mono"
+              <div>
+                <div
                   style={{
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    color: '#f8fafc',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {activeAssessment.node_code}
-                </span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    color: 'var(--text-muted)',
-                    fontFamily: 'var(--font-heading)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: tokens.colors.text.primary,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
                   }}
                 >
-                  5-FACTOR RISK MATRIX
-                </span>
+                  Overall Network Risk
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: tokens.colors.brand.primary,
+                    }}
+                  >
+                    {activeAssessment.node_code}
+                  </span>
+                  <span style={{ fontSize: '9.5px', color: tokens.colors.text.muted }}>
+                    // Targeted Outpost Vector
+                  </span>
+                </div>
               </div>
               <span
                 className={`badge ${
-                  activeAssessment.level === 'CRITICAL' || activeAssessment.level === 'HIGH'
+                  activeAssessment.level === 'CRITICAL'
                     ? 'badge-critical'
-                    : 'badge-ready'
+                    : activeAssessment.level === 'HIGH'
+                    ? 'badge-high'
+                    : 'badge-healthy'
                 }`}
               >
                 {activeAssessment.level} ({activeAssessment.overall_risk.toFixed(2)})
               </span>
             </div>
 
-            {/* Normalized 5-Factor Risk Breakdown Bars */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+            {/* Structured 5-Factor Risk Intelligence Bars */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               {[
-                { name: 'Inventory', val: activeAssessment.components.inventory, color: '#ef4444' },
-                { name: 'Demand', val: activeAssessment.components.demand, color: '#f59e0b' },
-                { name: 'Route', val: activeAssessment.components.route, color: '#00e5ff' },
-                { name: 'Transport', val: activeAssessment.components.transport, color: '#a855f7' },
-                { name: 'Environment', val: activeAssessment.components.environment, color: '#10b981' },
+                { name: 'Inventory', val: activeAssessment.components.inventory, color: tokens.colors.status.critical },
+                { name: 'Demand', val: activeAssessment.components.demand, color: tokens.colors.status.highRisk },
+                { name: 'Route', val: activeAssessment.components.route, color: tokens.colors.status.warning },
+                { name: 'Transport', val: activeAssessment.components.transport, color: tokens.colors.status.info },
+                { name: 'Environment', val: activeAssessment.components.environment, color: tokens.colors.brand.primary },
               ].map((driver) => {
                 const pct = Math.min(100, Math.max(0, driver.val * 100));
                 return (
@@ -113,22 +114,21 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                     key={driver.name}
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '74px 1fr 38px',
+                      gridTemplateColumns: '78px 1fr 34px',
                       alignItems: 'center',
                       gap: '8px',
                       fontSize: '11px',
                     }}
                   >
-                    <span style={{ color: '#94a3b8', fontSize: '10px', fontFamily: 'var(--font-heading)', letterSpacing: '0.04em' }}>
+                    <span style={{ color: tokens.colors.text.secondary, fontSize: '10px' }}>
                       {driver.name}
                     </span>
                     <div
                       style={{
-                        height: '6px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        borderRadius: '3px',
+                        height: '5px',
+                        backgroundColor: tokens.colors.background.elevated,
+                        borderRadius: '2px',
                         overflow: 'hidden',
-                        boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.4)',
                       }}
                     >
                       <div
@@ -136,9 +136,8 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                           height: '100%',
                           width: `${pct}%`,
                           backgroundColor: driver.color,
-                          borderRadius: '3px',
-                          boxShadow: `0 0 8px ${driver.color}66`,
-                          transition: 'width 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                          borderRadius: '2px',
+                          transition: 'width 0.25s ease-out',
                         }}
                       />
                     </div>
@@ -146,8 +145,8 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                       className="font-mono"
                       style={{
                         textAlign: 'right',
-                        color: '#cbd5e1',
-                        fontSize: '10px',
+                        color: tokens.colors.text.primary,
+                        fontSize: '9.5px',
                         fontWeight: 600,
                       }}
                     >
@@ -160,114 +159,179 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
           </div>
         )}
 
-        {/* Operational Alerts List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
+        {/* Network Risk Propagation Chain (Section 12) */}
+        <div
+          style={{
+            backgroundColor: tokens.colors.background.secondary,
+            border: `1px solid ${tokens.colors.border.subtle}`,
+            borderRadius: tokens.radii.card,
+            padding: '10px 12px',
+          }}
+        >
           <div
             style={{
-              fontSize: '10px',
-              color: 'var(--text-muted)',
+              fontSize: '9.5px',
+              color: tokens.colors.text.muted,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              fontFamily: 'var(--font-heading)',
               fontWeight: 700,
+              marginBottom: '6px',
             }}
           >
-            OPERATIONAL EARLY WARNINGS ({criticalAlerts.length})
+            NETWORK RISK PROPAGATION PATH
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 8px',
+              backgroundColor: tokens.colors.background.surface,
+              borderRadius: tokens.radii.badge,
+              border: `1px solid ${tokens.colors.border.subtle}`,
+              fontSize: '10px',
+              fontFamily: tokens.typography.fontMono,
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: tokens.colors.status.critical, fontWeight: 700 }}>R-22</div>
+              <div style={{ fontSize: '8.5px', color: tokens.colors.status.critical }}>BLOCKED</div>
+            </div>
+            <div style={{ color: tokens.colors.text.muted }}>➔</div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: tokens.colors.status.warning, fontWeight: 700 }}>HUB-02</div>
+              <div style={{ fontSize: '8.5px', color: tokens.colors.status.warning }}>DEGRADED</div>
+            </div>
+            <div style={{ color: tokens.colors.text.muted }}>➔</div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: tokens.colors.status.critical, fontWeight: 700 }}>FP-04</div>
+              <div style={{ fontSize: '8.5px', color: tokens.colors.status.critical }}>STOCKOUT</div>
+            </div>
+            <div style={{ color: tokens.colors.text.muted }}>➔</div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: tokens.colors.status.highRisk, fontWeight: 700 }}>FP-05</div>
+              <div style={{ fontSize: '8.5px', color: tokens.colors.status.highRisk }}>ISOLATED</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Operational Early Warnings List (Section 14: Clean Timeline List) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, overflowY: 'auto' }}>
+          <div
+            style={{
+              fontSize: '11px',
+              color: tokens.colors.text.muted,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              fontWeight: 600,
+              marginBottom: '6px',
+            }}
+          >
+            Early Warnings ({criticalAlerts.length})
           </div>
 
           {isLoading ? (
-            <div style={{ color: '#64748b', fontSize: '11px', textAlign: 'center', padding: '16px' }}>
+            <div style={{ color: tokens.colors.text.muted, fontSize: '11px', textAlign: 'center', padding: '12px' }}>
               Loading telemetry alerts...
             </div>
           ) : criticalAlerts.length === 0 ? (
             <div
               style={{
-                color: '#10b981',
+                color: tokens.colors.status.healthy,
                 fontSize: '11px',
                 textAlign: 'center',
-                padding: '16px',
-                backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                borderRadius: '4px',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
+                padding: '12px',
+                backgroundColor: tokens.colors.status.healthySoft,
+                borderRadius: tokens.radii.card,
+                border: `1px solid ${tokens.colors.status.healthyBorder}`,
               }}
             >
               ✓ No critical stockout alerts active in the sector.
             </div>
           ) : (
-            criticalAlerts.map((alert) => {
-              const isSelected =
-                selectedNodeId === alert.node_id || selectedNodeId === alert.node_code;
-              return (
-                <div
-                  key={alert.alert_id}
-                  onClick={() => onSelectNode(alert.node_id || alert.node_code)}
-                  style={{
-                    backgroundColor: isSelected
-                      ? 'rgba(18, 30, 50, 0.9)'
-                      : 'rgba(13, 20, 32, 0.7)',
-                    border: isSelected
-                      ? '1px solid #00e5ff'
-                      : alert.severity === 'CRITICAL'
-                      ? '1px solid rgba(239, 68, 68, 0.35)'
-                      : '1px solid var(--border-subtle)',
-                    borderLeft: alert.severity === 'CRITICAL' ? '3px solid #ef4444' : '3px solid #f59e0b',
-                    borderRadius: '4px',
-                    padding: '9px 12px',
-                    cursor: 'pointer',
-                    boxShadow: isSelected ? '0 0 14px rgba(0, 229, 255, 0.2)' : 'var(--shadow-sm)',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {criticalAlerts.map((alert, idx) => {
+                const isSelected =
+                  selectedNodeId === alert.node_id || selectedNodeId === alert.node_code;
+                const dotColor =
+                  alert.severity === 'CRITICAL'
+                    ? tokens.colors.status.critical
+                    : alert.severity === 'HIGH'
+                    ? tokens.colors.status.highRisk
+                    : tokens.colors.status.warning;
+
+                return (
                   <div
+                    key={alert.alert_id}
+                    onClick={() => onSelectNode(alert.node_id || alert.node_code)}
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '5px',
+                      alignItems: 'flex-start',
+                      gap: '10px',
+                      padding: '8px 6px',
+                      borderBottom: idx < criticalAlerts.length - 1 ? `1px solid ${tokens.colors.border.subtle}` : 'none',
+                      backgroundColor: isSelected ? tokens.colors.background.elevated : 'transparent',
+                      borderRadius: tokens.radii.badge,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="font-mono" style={{ fontWeight: 800, color: '#f8fafc', fontSize: '12px' }}>
-                        {alert.node_code}
-                      </span>
-                      <span className="badge badge-cyan" style={{ fontSize: '9px', padding: '1px 5px' }}>
-                        {alert.item}
-                      </span>
-                    </div>
-                    <span className={`badge ${alert.severity === 'CRITICAL' ? 'badge-critical' : 'badge-warning'}`}>
-                      {alert.severity}
+                    {/* Semantic Status Dot */}
+                    <span
+                      style={{
+                        color: dotColor,
+                        fontSize: '11px',
+                        lineHeight: '16px',
+                        userSelect: 'none',
+                      }}
+                    >
+                      ●
                     </span>
-                  </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '14px',
-                      fontSize: '11px',
-                      color: '#cbd5e1',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    <span>
-                      Stockout Prob: <strong style={{ color: '#ef4444', fontFamily: 'var(--font-mono)' }}>{(alert.probability * 100).toFixed(0)}%</strong>
-                    </span>
-                    <span>
-                      Horizon: <strong className="font-mono" style={{ color: '#38bdf8' }}>{alert.time_horizon_hours}h</strong>
-                    </span>
-                  </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: tokens.colors.text.primary }}>
+                            {alert.node_code}
+                          </span>
+                          <span style={{ fontSize: '11px', color: tokens.colors.text.secondary }}>
+                            {alert.item}
+                          </span>
+                        </div>
+                        <span
+                          className={`badge ${
+                            alert.severity === 'CRITICAL'
+                              ? 'badge-critical'
+                              : alert.severity === 'HIGH'
+                              ? 'badge-high'
+                              : 'badge-warning'
+                          }`}
+                          style={{ fontSize: '9px', padding: '1px 5px' }}
+                        >
+                          {alert.severity}
+                        </span>
+                      </div>
 
-                  {alert.causes && alert.causes.length > 0 && (
-                    <div style={{ fontSize: '10px', color: '#94a3b8', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ color: '#64748b' }}>Causes:</span>
-                      <span>{alert.causes.join(', ')}</span>
+                      <div style={{ fontSize: '11.5px', color: tokens.colors.text.secondary, lineHeight: 1.35, marginBottom: '3px' }}>
+                        {alert.explanation}
+                      </div>
+
+                      <div style={{ fontSize: '10.5px', color: tokens.colors.text.muted, display: 'flex', gap: '8px' }}>
+                        <span>+{alert.time_horizon_hours}h forecast</span>
+                        <span>•</span>
+                        <span>{(alert.probability * 100).toFixed(0)}% prob</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 };
+
+export default RiskPanel;

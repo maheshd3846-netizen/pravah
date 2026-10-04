@@ -1,4 +1,5 @@
 import React from 'react';
+import { tokens } from '../tokens';
 
 interface KpiStripProps {
   totalNodes: number | null;
@@ -17,111 +18,73 @@ export const KpiStrip: React.FC<KpiStripProps> = ({
   activeRecommendationsCount,
   isLoading = false,
 }) => {
-  const cards = [
+  const metrics = [
     {
-      label: 'NODES',
-      code: 'ECHELON-GRID',
+      label: 'Network',
       value: totalNodes !== null ? totalNodes : 'Unavailable',
-      color: '#38bdf8',
-      desc: '1 Depot / 3 Hubs / 5 Transit / 6 Posts',
-      indicatorColor: '#0284c7',
+      status: 'Nodes',
+      subtext: '1 Depot • 3 Hubs • 6 Posts',
     },
     {
-      label: 'ROUTES',
-      code: 'TERRAIN-PASSES',
+      label: 'Corridors',
       value: totalRoutes !== null ? totalRoutes : 'Unavailable',
-      color: '#e2e8f0',
-      desc: 'Highways, Alpine Passes, Trails',
-      indicatorColor: '#64748b',
+      status: 'Active',
+      subtext: 'Highways & mountain passes',
     },
     {
-      label: 'VEHICLES',
-      code: 'FLEET-TELEMETRY',
+      label: 'Fleet',
       value: totalVehicles !== null ? totalVehicles : 'Unavailable',
-      color: '#e2e8f0',
-      desc: 'Heavy, Medium, All-Terrain Fleets',
-      indicatorColor: '#64748b',
+      status: 'Ready',
+      subtext: 'Heavy & all-terrain vehicles',
     },
     {
-      label: 'HIGH-RISK NODES',
-      code: 'CRITICAL-STOCKOUT',
+      label: 'Stockout',
       value: highRiskNodesCount !== null ? highRiskNodesCount : 'Unavailable',
-      color: highRiskNodesCount && highRiskNodesCount > 0 ? '#ef4444' : '#10b981',
-      desc: 'Nodes with overall risk ≥ 0.35',
-      indicatorColor: highRiskNodesCount && highRiskNodesCount > 0 ? '#ef4444' : '#10b981',
+      status: highRiskNodesCount && highRiskNodesCount > 0 ? 'At Risk' : 'Nominal',
+      statusColor: highRiskNodesCount && highRiskNodesCount > 0 ? tokens.colors.status.highRisk : tokens.colors.status.healthy,
+      subtext: 'Nodes near safety threshold',
     },
     {
-      label: 'ACTIVE RECOMMENDATIONS',
-      code: 'DECISION-SUPPORT',
+      label: 'Decisions',
       value: activeRecommendationsCount !== null ? activeRecommendationsCount : 'Unavailable',
-      color: '#10b981',
-      desc: 'Conflict-free prioritized actions',
-      indicatorColor: '#10b981',
+      status: 'Candidates',
+      statusColor: tokens.colors.brand.primary,
+      subtext: 'LP solved & validated',
     },
   ];
 
   return (
     <div className="kpi-strip" role="region" aria-label="Key Performance Indicators">
-      {cards.map((card, idx) => (
-        <div key={idx} className="kpi-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="kpi-label">{card.label}</div>
+      {metrics.map((metric, idx) => (
+        <div key={idx} className="kpi-metric-item">
+          <div className="kpi-metric-label">{metric.label}</div>
+          <div className="kpi-metric-value-row">
+            <span className="kpi-metric-value">
+              {isLoading ? '...' : metric.value}
+            </span>
             <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '9px',
-                color: 'var(--text-dim)',
-                letterSpacing: '0.04em',
-              }}
+              className="kpi-metric-status"
+              style={{ color: metric.statusColor || tokens.colors.text.secondary }}
             >
-              {card.code}
+              {metric.status}
             </span>
           </div>
-
-          <div
-            className="kpi-value"
-            style={{
-              color: card.color,
-              textShadow: card.color === '#ef4444' ? '0 0 12px rgba(239, 68, 68, 0.4)' : undefined,
-            }}
-          >
-            {isLoading ? '...' : card.value}
-          </div>
-
           <div
             style={{
-              fontSize: '10px',
-              color: 'var(--text-muted)',
+              fontSize: '11px',
+              color: tokens.colors.text.muted,
               marginTop: '2px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}
           >
-            {card.desc}
-          </div>
-
-          {/* Micro Progress Bar / Activity Indicator */}
-          <div
-            style={{
-              marginTop: '6px',
-              height: '2px',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '1px',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                height: '100%',
-                width: '60%',
-                backgroundColor: card.indicatorColor,
-                opacity: 0.8,
-              }}
-            />
+            {metric.subtext}
           </div>
         </div>
       ))}
     </div>
   );
 };
+
+export default KpiStrip;
