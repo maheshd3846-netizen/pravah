@@ -6,6 +6,9 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com)
 [![Pytest](https://img.shields.io/badge/pytest-passing-brightgreen.svg)](https://docs.pytest.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Technical Report](https://img.shields.io/badge/Documentation-Technical%20Report-blueviolet.svg)](TECHNICAL_REPORT.md)
+
+> 📑 **Full Technical Report Available**: [**Read the PRAVAH Master Technical Report (SIH PS 26251)**](TECHNICAL_REPORT.md) for complete mathematical formulations, system architecture, quantile forecasting specs, HiGHS LP solver analysis, and empirical acceptance benchmarks.
 
 ---
 
