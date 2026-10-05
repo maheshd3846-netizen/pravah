@@ -160,7 +160,24 @@ export const App: React.FC = () => {
 
       // Step 2: Multi-Factor Risk Assessment (Risk)
       setAnalyzeStage('RISK');
-      await api.recalculateRisk();
+      const riskRes = await api.recalculateRisk();
+      if (riskRes) {
+        setRiskOverview(riskRes);
+        if (riskRes.nodes) {
+          const riskMap: Record<string, any> = {};
+          riskRes.nodes.forEach((n) => {
+            riskMap[n.node_id] = n;
+            riskMap[n.node_code] = n;
+          });
+          setNodeRisks(riskMap);
+        }
+      }
+      try {
+        const alertsRes = await api.fetchAlerts();
+        setAlerts(alertsRes.alerts);
+      } catch {
+        // Non-critical alert refresh failure
+      }
       await new Promise((r) => setTimeout(r, 550));
 
       // Step 3: Mathematical Optimization (Optimize)
@@ -168,6 +185,7 @@ export const App: React.FC = () => {
       const optRes = await api.solveOptimization({
         scenario_id: 'COMPOUND_DISRUPTION',
         demand_policy: 'P80',
+        solver_type: 'MILP',
       });
       await new Promise((r) => setTimeout(r, 550));
 
@@ -202,7 +220,8 @@ export const App: React.FC = () => {
       setAnalyzeStage('COMPLETE');
       setLastUpdated(new Date().toISOString());
     } catch (err: any) {
-      alert(`Network analysis failed: ${err.message}`);
+      const msg = err?.message || (typeof err === 'string' ? err : 'Unknown error during analysis pipeline');
+      alert(`Network analysis failed: ${msg}`);
       setShowAnalyzeModal(false);
     } finally {
       setIsAnalyzing(false);
@@ -219,6 +238,7 @@ export const App: React.FC = () => {
       const optRes = await api.solveOptimization({
         scenario_id: scenarioName,
         demand_policy: 'P80',
+        solver_type: 'MILP',
       });
       const evalRes = await api.evaluatePlan({
         optimization_run_id: optRes.run_id,

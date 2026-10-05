@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from optimization.types import DemandPolicy, SolverType, OptimizationStatus
 
@@ -17,6 +17,20 @@ class OptimizationSolveRequest(BaseModel):
         description="Weights for transport, shortage, delay, risk, and imbalance",
     )
     horizon_hours: int = Field(default=72, ge=1, le=336, description="Planning horizon in hours")
+
+    @field_validator("solver_type", mode="before")
+    @classmethod
+    def normalize_solver_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.upper()
+        return v
+
+    @field_validator("demand_policy", mode="before")
+    @classmethod
+    def normalize_demand_policy(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.upper()
+        return v
 
 
 class MovementDecisionSchema(BaseModel):

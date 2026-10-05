@@ -37,7 +37,29 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
       } catch {
         errorBody = await response.text();
       }
-      const message = errorBody?.detail || errorBody?.message || `API error (${response.status}): ${response.statusText}`;
+
+      let message = `API error (${response.status}): ${response.statusText}`;
+      if (typeof errorBody === 'string' && errorBody.trim().length > 0) {
+        message = errorBody;
+      } else if (errorBody?.detail) {
+        if (typeof errorBody.detail === 'string') {
+          message = errorBody.detail;
+        } else if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail
+            .map((item: any) => {
+              if (typeof item === 'string') return item;
+              const field = Array.isArray(item?.loc) ? item.loc.slice(1).join('.') : '';
+              const msg = item?.msg || item?.message || JSON.stringify(item);
+              return field ? `${field}: ${msg}` : msg;
+            })
+            .join('; ');
+        } else if (typeof errorBody.detail === 'object') {
+          message = JSON.stringify(errorBody.detail);
+        }
+      } else if (errorBody?.message) {
+        message = typeof errorBody.message === 'string' ? errorBody.message : JSON.stringify(errorBody.message);
+      }
+
       throw new ApiError(response.status, message, errorBody);
     }
 
@@ -46,6 +68,7 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
     if (err instanceof ApiError) {
       throw err;
     }
-    throw new ApiError(0, err.message || 'Network communication failure. Please verify PRAVAH backend server is running.');
+    const fallback = typeof err?.message === 'string' ? err.message : 'Network communication failure. Please verify PRAVAH backend server is running.';
+    throw new ApiError(0, fallback);
   }
 }
