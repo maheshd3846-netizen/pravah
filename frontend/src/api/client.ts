@@ -1,8 +1,12 @@
 /**
  * Base HTTP API Client for PRAVAH backend.
+ * In development, defaults to '/api' (proxied by Vite to http://127.0.0.1:8000).
+ * In production, uses import.meta.env.VITE_API_BASE_URL (e.g. https://pravah-backend.onrender.com).
  */
 
-const API_BASE = '/api';
+const rawBase = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+const API_BASE = rawBase ? (rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`) : '/api';
+
 
 export class ApiError extends Error {
   status: number;

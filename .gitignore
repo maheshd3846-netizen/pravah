@@ -46,3 +46,17 @@ data/scenarios/*.custom.json
 *.log
 sqlite.db
 pravah.db
+
+# Environments & Secrets
+.env
+.env.*
+!.env.example
+!frontend/.env.example
+*.local
+
+# Node & Frontend Build
+node_modules/
+dist/
+dist-ssr/
+.vercel
+

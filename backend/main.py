@@ -41,9 +41,26 @@ from backend.app.api import api_router
 from backend.app.models.database import init_db
 
 # Configure CORS for frontend access
+default_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+frontend_origins_raw = os.getenv("FRONTEND_ORIGIN", os.getenv("CORS_ORIGINS", ""))
+allowed_origins = list(default_origins)
+if frontend_origins_raw:
+    for origin in frontend_origins_raw.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned and cleaned not in allowed_origins:
+            allowed_origins.append(cleaned)
+
+allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() in ("true", "1")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"] if allow_all_origins else allowed_origins,
+    allow_origin_regex=r"^https://.*\.vercel\.app$" if not allow_all_origins else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,8 +82,20 @@ def root_endpoint():
     }
 
 
+@app.get("/health")
+def health_endpoint():
+    """Root health check probe for platform orchestrators (e.g. Render)."""
+    return {
+        "status": "healthy",
+        "engine": "PRAVAH",
+    }
+
+
+
 if __name__ == "__main__":
     import uvicorn
-    host = os.getenv("API_HOST", "127.0.0.1")
-    port = int(os.getenv("API_PORT", 8000))
-    uvicorn.run("backend.main:app", host=host, port=port, reload=True)
+    port = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
+    host = os.getenv("API_HOST", "0.0.0.0" if os.getenv("PORT") else "127.0.0.1")
+    reload_flag = os.getenv("ENVIRONMENT", "development").lower() == "development"
+    uvicorn.run("backend.main:app", host=host, port=port, reload=reload_flag)
+
